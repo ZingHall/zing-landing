@@ -8,17 +8,15 @@ import { PageLinks } from '@/components/PageLinks'
 import { RootLayout } from '@/components/RootLayout'
 import { type CaseStudy, type MDXEntry, loadCaseStudies } from '@/lib/mdx'
 
-export default async function CaseStudyLayout({
+export default function CaseStudyLayout({
   caseStudy,
   children,
 }: {
   caseStudy: MDXEntry<CaseStudy>
   children: React.ReactNode
 }) {
-  let allCaseStudies = await loadCaseStudies()
-  let moreCaseStudies = allCaseStudies
-    .filter(({ metadata }) => metadata !== caseStudy)
-    .slice(0, 2)
+  // For static export compatibility, we don't load additional case studies
+  let moreCaseStudies: Array<MDXEntry<CaseStudy>> = []
 
   return (
     <RootLayout>

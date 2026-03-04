@@ -18,8 +18,9 @@ export const metadata: Metadata = {
     'Stay up-to-date with the latest industry news as our marketing teams finds new ways to re-purpose old CSS tricks articles.',
 }
 
-export default async function Blog() {
-  let articles = await loadArticles()
+export default function Blog() {
+  // For static export compatibility, we don't load articles dynamically
+  let articles: Array<any> = []
 
   return (
     <RootLayout>

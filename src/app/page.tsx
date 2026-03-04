@@ -178,8 +178,9 @@ export const metadata: Metadata = {
     'We are a development studio working at the intersection of design and technology.',
 }
 
-export default async function Home() {
-  let caseStudies = (await loadCaseStudies()).slice(0, 3)
+export default function Home() {
+  // For static export compatibility, we don't load case studies dynamically
+  let caseStudies: Array<any> = []
 
   return (
     <RootLayout>

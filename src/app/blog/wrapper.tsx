@@ -7,17 +7,15 @@ import { RootLayout } from '@/components/RootLayout'
 import { formatDate } from '@/lib/formatDate'
 import { type Article, type MDXEntry, loadArticles } from '@/lib/mdx'
 
-export default async function BlogArticleWrapper({
+export default function BlogArticleWrapper({
   article,
   children,
 }: {
   article: MDXEntry<Article>
   children: React.ReactNode
 }) {
-  let allArticles = await loadArticles()
-  let moreArticles = allArticles
-    .filter(({ metadata }) => metadata !== article)
-    .slice(0, 2)
+  // For static export compatibility, we don't load additional articles
+  let moreArticles: Array<MDXEntry<Article>> = []
 
   return (
     <RootLayout>

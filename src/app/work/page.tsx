@@ -143,8 +143,9 @@ export const metadata: Metadata = {
     'We believe in efficiency and maximizing our resources to provide the best value to our clients.',
 }
 
-export default async function Work() {
-  let caseStudies = await loadCaseStudies()
+export default function Work() {
+  // For static export compatibility, we don't load case studies dynamically
+  let caseStudies: Array<any> = []
 
   return (
     <RootLayout>
