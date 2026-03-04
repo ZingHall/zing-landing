@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
 
 import { Container } from '@/components/Container'
 import { FadeIn } from '@/components/FadeIn'
@@ -7,30 +10,20 @@ import { socialMediaProfiles } from '@/components/SocialMedia'
 
 const navigation = [
   {
-    title: 'Work',
+    title: 'Platform',
     links: [
-      { title: 'FamilyFund', href: '/work/family-fund' },
-      { title: 'Unseal', href: '/work/unseal' },
-      { title: 'Phobia', href: '/work/phobia' },
-      {
-        title: (
-          <>
-            See all <span aria-hidden="true">&rarr;</span>
-          </>
-        ),
-        href: '/work',
-      },
+      { title: 'Try Beta App', href: 'https://app.zing.you' },
+      { title: 'API Docs (Coming Soon)', href: '#' },
+      // { title: 'Pricing', href: '#' },
     ],
   },
-  {
-    title: 'Company',
-    links: [
-      { title: 'About', href: '/about' },
-      { title: 'Process', href: '/process' },
-      { title: 'Blog', href: '/blog' },
-      { title: 'Contact us', href: '/contact' },
-    ],
-  },
+  // {
+  //   title: 'Company',
+  //   links: [
+  //     { title: 'About', href: '/about' },
+  //     { title: 'Blog', href: '/blog' },
+  //   ],
+  // },
   {
     title: 'Connect',
     links: socialMediaProfiles,
@@ -50,6 +43,7 @@ function Navigation() {
               {section.links.map((link, linkIndex) => (
                 <li key={linkIndex} className="mt-4">
                   <Link
+                    target='_blank'
                     href={link.href}
                     className="transition hover:text-neutral-950"
                   >
@@ -79,14 +73,16 @@ function ArrowIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 }
 
 function NewsletterForm() {
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
     <form className="max-w-sm">
       <h2 className="font-display text-sm font-semibold tracking-wider text-neutral-950">
-        Sign up for our newsletter
+        Join the Creator Economy Revolution
       </h2>
       <p className="mt-4 text-sm text-neutral-700">
-        Subscribe to get the latest design news, articles, resources and
-        inspiration.
+        Get updates on the latest monetization tools, API features, and creator
+        success stories.
       </p>
       <div className="relative mt-6">
         <input
@@ -100,7 +96,12 @@ function NewsletterForm() {
           <button
             type="submit"
             aria-label="Submit"
-            className="flex aspect-square h-full items-center justify-center rounded-xl bg-neutral-950 text-white transition hover:bg-neutral-800"
+            className="flex aspect-square h-full items-center justify-center rounded-xl text-white transition"
+            style={{ backgroundColor: isHovered ? '#E6440F' : '#FF4D13' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onFocus={() => setIsHovered(true)}
+            onBlur={() => setIsHovered(false)}
           >
             <ArrowIcon className="w-4" />
           </button>
@@ -125,7 +126,7 @@ export function Footer() {
             <Logo className="h-8" fillOnHover />
           </Link>
           <p className="text-sm text-neutral-700">
-            © Studio Agency Inc. {new Date().getFullYear()}
+            © Zing Inc. {new Date().getFullYear()}
           </p>
         </div>
       </FadeIn>
