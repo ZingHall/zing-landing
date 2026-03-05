@@ -41,15 +41,18 @@ function Navigation() {
             </div>
             <ul role="list" className="mt-4 text-sm text-neutral-700">
               {section.links.map((link, linkIndex) => (
-                <li key={linkIndex} className="mt-4">
-                  <Link
-                    target='_blank'
-                    href={link.href}
-                    className="transition hover:text-neutral-950"
-                  >
-                    {link.title}
-                  </Link>
-                </li>
+<li key={linkIndex} className="mt-4">
+  <Link
+    target="_blank"
+    href={link.href}
+    className="flex items-center gap-2 transition hover:text-neutral-950"
+  >
+    {/* {'icon' in link && link.icon && ( */}
+    {/*   <link.icon className="h-5 w-5 fill-current" /> */}
+    {/* )} */}
+    {link.title}
+  </Link>
+</li>
               ))}
             </ul>
           </li>
