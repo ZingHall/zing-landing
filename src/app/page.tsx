@@ -191,9 +191,9 @@ function UseCasesShowcase() {
                   >
                     {useCase.potential}
                   </p>
-                  <p className="mt-1 text-sm text-neutral-500">
-                    Available in Beta
-                  </p>
+                  {/* <p className="mt-1 text-sm text-neutral-500"> */}
+                  {/*   Available in Beta */}
+                  {/* </p> */}
                 </div>
               </article>
             </FadeIn>

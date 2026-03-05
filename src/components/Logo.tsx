@@ -13,7 +13,7 @@ export function Logomark({
 
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" {...props}>
-      {/* Animated Fill */}
+      {/* Animated wipe fill */}
       <rect
         clipPath={`url(#${id}-clip)`}
         className={clsx(
@@ -25,16 +25,18 @@ export function Logomark({
         height="64"
       />
 
+      {/* Outline stroke */}
       <path
-        d="M38.72 23.6L45.86 12.26L50.48 5.12H58.88V13.52L51.63 24.76L47.12 32H58.88V58.88H25.28V40.4L18.61 51.32L13.52 58.88H5.12V50.48L12.26 39.14L16.88 32H5.12V5.12H38.72V23.6Z"
+        d="M37.06 25.5L42.52 16.82L46.06 11.36H52.48V17.78L46.94 26.38L43.48 31.92H52.48V52.48H26.78V38.35L21.68 46.7L17.78 52.48H11.36V46.06L16.82 37.38L20.36 31.92H11.36V11.36H37.06V25.5Z"
         className={invert ? 'stroke-white' : 'stroke-neutral-950'}
         fill="none"
         strokeWidth="0.7"
       />
 
+      {/* ClipPath for wipe animation */}
       <defs>
         <clipPath id={`${id}-clip`}>
-          <path d="M38.72 23.6L45.86 12.26L50.48 5.12H58.88V13.52L51.63 24.76L47.12 32H58.88V58.88H25.28V40.4L18.61 51.32L13.52 58.88H5.12V50.48L12.26 39.14L16.88 32H5.12V5.12H38.72V23.6Z" />
+          <path d="M37.06 25.5L42.52 16.82L46.06 11.36H52.48V17.78L46.94 26.38L43.48 31.92H52.48V52.48H26.78V38.35L21.68 46.7L17.78 52.48H11.36V46.06L16.82 37.38L20.36 31.92H11.36V11.36H37.06V25.5Z" />
         </clipPath>
       </defs>
     </svg>
