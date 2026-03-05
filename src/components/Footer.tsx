@@ -129,7 +129,7 @@ export function Footer() {
             <Logo className="h-8" fillOnHover />
           </Link>
           <p className="text-sm text-neutral-700">
-            © Zing Inc. {new Date().getFullYear()}
+            © Zing you. {new Date().getFullYear()}
           </p>
         </div>
       </FadeIn>

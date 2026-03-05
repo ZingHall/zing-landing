@@ -259,7 +259,7 @@ function Features() {
 
 export const metadata: Metadata = {
   title:
-    'Zing - The Stripe for Content | Programmable Monetization Infrastructure',
+    'Zing - Content Monetization Infrastructure',
   description:
     'Programmable monetization infrastructure for the AI-powered creator economy. One API integration, deploy anywhere. The unified layer for content monetization.',
 }
@@ -273,7 +273,7 @@ export default function Home() {
       <Container className="mt-24 sm:mt-32 md:mt-56">
         <FadeIn className="max-w-4xl">
           <h1 className="font-display text-5xl font-medium tracking-tight text-balance text-neutral-950 sm:text-7xl">
-            The Stripe for Content
+            Content monetization infrastructure
           </h1>
           <p className="mt-6 text-2xl font-medium text-neutral-700">
             Programmable monetization infrastructure for the AI-powered creator
