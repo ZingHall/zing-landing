@@ -1,0 +1,343 @@
+export const metadata = {
+  title: 'Attribution Ledger',
+  description:
+    'Learn how the Attribution Ledger tracks AI usage and maintains immutable records linking outputs to source content.',
+}
+
+# Attribution Ledger
+
+The Attribution Ledger is an immutable record on Sui that links AI outputs back to specific Walrus Blob IDs. This ensures creators are properly credited whenever their content is used by AI agents. {{ className: 'lead' }}
+
+<Note>
+  **Status**: Attribution Ledger is currently in development. The API endpoints
+  below represent the planned implementation.
+</Note>
+
+## Overview
+
+Every time an AI agent queries and uses content from the Knowledge Graph, an immutable record is created:
+
+```
+AI Output → Attribution Ledger → Source Walrus Blob → Creator
+     ↓
+Immutable record ensures:
+- Creator gets credited
+- Usage is transparent
+- Royalties are tracked
+```
+
+## The Attribution Record Model
+
+### Properties
+
+<Properties>
+  <Property name="id" type="string">
+    Unique identifier for the attribution record.
+  </Property>
+  <Property name="query_id" type="string">
+    The Pay-Per-Query transaction ID.
+  </Property>
+  <Property name="triple_id" type="string">
+    The knowledge triple that was accessed.
+  </Property>
+  <Property name="blob_id" type="string">
+    The source Walrus blob ID.
+  </Property>
+  <Property name="creator" type="string">
+    The creator's Sui address.
+  </Property>
+  <Property name="query_creator" type="string">
+    The AI agent/researcher who queried.
+  </Property>
+  <Property name="usage_purpose" type="string">
+    Declared purpose of the query.
+  </Property>
+  <Property name="created_at" type="timestamp">
+    When the attribution was recorded.
+  </Property>
+  <Property name="fee_paid" type="string">
+    The fee paid for this query.
+  </Property>
+</Properties>
+
+---
+
+## Query Attribution History {{ tag: 'GET', label: '/v1/attribution/creator' }}
+
+<Row>
+  <Col>
+
+    Get attribution records for a creator (as creator).
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="start_date" type="timestamp">
+        Filter records from this date.
+      </Property>
+      <Property name="end_date" type="timestamp">
+        Filter records until this date.
+      </Property>
+      <Property name="limit" type="integer">
+        Number of results (default: 10).
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/attribution/creator">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/attribution/creator \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const records = await client.attribution.forCreator();
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "creator": "0xcreator...alice",
+      "records": [
+        {
+          "id": "attr_001",
+          "query_id": "intent_abc123",
+          "triple_id": "triple_001",
+          "blob_id": "walrus_blob_abc123",
+          "query_creator": "0xagent...xyz",
+          "usage_purpose": "research_for_article",
+          "fee_paid": "0.001",
+          "created_at": 1709312400
+        },
+        {
+          "id": "attr_002",
+          "query_id": "intent_xyz789",
+          "triple_id": "triple_042",
+          "blob_id": "walrus_blob_def456",
+          "query_creator": "0xagent...pqr",
+          "usage_purpose": "training_data_collection",
+          "fee_paid": "0.001",
+          "created_at": 1709226000
+        }
+      ],
+      "total_attributions": 1250,
+      "total_fees_earned": "1.25",
+      "query_stats": {
+        "unique_agents": 45,
+        "total_triples_accessed": 3200
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Attribution Stats {{ tag: 'GET', label: '/v1/attribution/stats' }}
+
+<Row>
+  <Col>
+
+    Get aggregated attribution statistics for the authenticated creator.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/attribution/stats">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/attribution/stats \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const stats = await client.attribution.getStats();
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "creator": "0xcreator...alice",
+      "period": "all_time",
+      "total_attributions": 1250,
+      "total_fees_earned": "1.25",
+      "by_purpose": {
+        "research_for_article": 450,
+        "training_data": 300,
+        "verification": 200,
+        "other": 300
+      },
+      "by_agent": {
+        "0xagent...xyz": 500,
+        "0xagent...abc": 350,
+        "0xagent...pqr": 400
+      },
+      "top_content": [
+        {
+          "blob_id": "walrus_blob_abc123",
+          "title": "Understanding AI",
+          "attributions": 85,
+          "fees": "0.085"
+        }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Verify Attribution {{ tag: 'GET', label: '/v1/attribution/verify' }}
+
+<Row>
+  <Col>
+
+    Verify if content was properly attributed. Used to check if usage was recorded.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="blob_id" type="string">
+        The Walrus blob ID to verify.
+      </Property>
+      <Property name="query_id" type="string">
+        Optional specific query ID to check.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/attribution/verify">
+
+    ```bash {{ title: 'cURL' }}
+    curl "https://api.zing.protocol/v1/attribution/verify?blob_id=walrus_blob_abc123" \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const verified = await client.attribution.verify({
+      blobId: 'walrus_blob_abc123',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "blob_id": "walrus_blob_abc123",
+      "verified": true,
+      "attribution_count": 12,
+      "total_fees_paid": "0.012",
+      "recent_attributions": [
+        {
+          "query_creator": "0xagent...xyz",
+          "purpose": "research_for_article",
+          "fee": "0.001",
+          "timestamp": 1709312400
+        }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## How Attribution Works
+
+```
+1. AI Agent initiates query
+         ↓
+2. Triple data unlocked via PPQ
+         ↓
+3. Attribution record created atomically:
+   ┌────────────────────────────────────────┐
+   │  ON-CHAIN ATTRIBUTION RECORD            │
+   │                                         │
+   │  triple_id → blob_id → creator         │
+   │  query_id → query_creator              │
+   │  purpose → fee_paid → timestamp       │
+   └────────────────────────────────────────┘
+         ↓
+4. Record immutable on Sui blockchain
+         ↓
+5. Creator can view in dashboard
+         ↓
+6. Fees tracked for royalty reporting
+```
+
+## Attribution Dashboard
+
+Creators can view:
+
+| Metric                 | Description                         |
+| ---------------------- | ----------------------------------- |
+| **Total Attributions** | Number of times content was queried |
+| **Unique Agents**      | Number of different AI agents       |
+| **Fees Earned**        | Total PPQ fees from attribution     |
+| **Top Content**        | Most frequently accessed articles   |
+| **Usage by Purpose**   | Breakdown of how content is used    |
+
+## Royalty Tracking
+
+Attribution records feed into the royalty system:
+
+```typescript
+// Creator royalty calculation
+const royalties = {
+  subscription_fees: '500.00', // From subscriptions
+  donation_fees: '50.00', // From donations
+  ppq_royalties: '1.25', // From AI attribution
+  total: '551.25',
+}
+
+// 80% to creator, 20% platform
+const creator_share = parseFloat(royalties.ppq_royalties) * 0.8 // $1.00
+```
+
+## Benefits
+
+| For Creators                | For AI Agents              |
+| --------------------------- | -------------------------- |
+| Transparent usage tracking  | Compliant data access      |
+| Royalties from AI usage     | Clear attribution records  |
+| Insight into content value  | Audit trail for outputs    |
+| Control over data licensing | Direct payment to creators |
+
+## Compliance
+
+<Note>
+  **Creator Consent**: Content on Zing Protocol is opt-in for Knowledge Graph
+  inclusion. Creators choose which content to expose.
+</Note>
+
+<Note>
+  **Immutable Records**: Attribution records cannot be altered or deleted,
+  ensuring long-term auditability.
+</Note>
+
+<Note>
+  **Transparent Fees**: All PPQ fees are tracked and traceable to specific
+  content access.
+</Note>
+
+## Future Features
+
+- **Attestation API** - AI agents can request usage attestations
+- **License Integration** - Different license types per content
+- **Cross-Platform Attribution** - Track usage across platforms
+
+## Next Steps
+
+- [Pay-Per-Query API](/pay-per-query) - Access Knowledge Graph data
+- [Knowledge Graph](/knowledge-graph) - Explore knowledge triples
+- [Synthesis](/synthesis) - Multi-source collaborative research

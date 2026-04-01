@@ -1,0 +1,364 @@
+export const metadata = {
+  title: 'Wallet',
+  description:
+    'Learn how to manage your USDC balance, top up from external wallets, and withdraw funds on Zing Protocol.',
+}
+
+# Wallet
+
+The Zing Protocol wallet manages your USDC balance for all platform transactions including subscriptions, donations, and storage purchases. {{ className: 'lead' }}
+
+## The Wallet Model
+
+### Properties
+
+<Properties>
+  <Property name="address" type="string">
+    The user's Sui address (derived from zkLogin).
+  </Property>
+  <Property name="balance" type="string">
+    Current USDC balance (e.g., "100.00").
+  </Property>
+  <Property name="currency" type="string">
+    Always "USDC" for Zing Protocol.
+  </Property>
+  <Property name="total_received" type="string">
+    Total USDC received all-time.
+  </Property>
+  <Property name="total_sent" type="string">
+    Total USDC sent all-time.
+  </Property>
+</Properties>
+
+---
+
+## Get Balance {{ tag: 'GET', label: '/v1/wallet/balance' }}
+
+<Row>
+  <Col>
+
+    Get the current USDC balance for the authenticated user.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/wallet/balance">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/wallet/balance \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const balance = await client.wallet.getBalance();
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "address": "0x7a8d9c0b1e2f3a4b...",
+      "balance": "150.00",
+      "currency": "USDC",
+      "total_received": "500.00",
+      "total_sent": "350.00"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Top Up Wallet {{ tag: 'POST', label: '/v1/wallet/topup' }}
+
+<Row>
+  <Col>
+
+    Transfer USDC from a connected external Sui wallet to your Zing wallet.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="amount" type="string">
+        Amount of USDC to transfer (e.g., "50.00").
+      </Property>
+    </Properties>
+
+    ### How it works
+
+    1. Connect an external Sui wallet
+    2. Specify the amount to transfer
+    3. Sign the transaction in your external wallet
+    4. USDC is transferred to your Zing wallet
+
+    ### Transaction fee
+
+    ~0.001 USDC for Sui blockchain gas
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/wallet/topup">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/wallet/topup \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d amount="50.00"
+    ```
+
+    ```js
+    const result = await client.wallet.topUp({
+      amount: '50.00',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "success": true,
+      "amount": "50.00",
+      "new_balance": "200.00",
+      "tx_hash": "0xabc123...sui_tx"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Withdraw Funds {{ tag: 'POST', label: '/v1/wallet/payout' }}
+
+<Row>
+  <Col>
+
+    Withdraw USDC from your Zing wallet to an external Sui address.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="amount" type="string">
+        Amount of USDC to withdraw (e.g., "25.00").
+      </Property>
+      <Property name="destination" type="string">
+        Destination Sui address.
+      </Property>
+    </Properties>
+
+    ### Important notes
+
+    - Minimum withdrawal: 1 USDC
+    - Transaction fee: 0.001 USDC (deducted from amount)
+    - Ensure destination address is correct - transactions are irreversible
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/wallet/payout">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/wallet/payout \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d amount="25.00" \
+      -d destination="0xexternal...wallet"
+    ```
+
+    ```js
+    const result = await client.wallet.payout({
+      amount: '25.00',
+      destination: '0xexternal...wallet',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "success": true,
+      "amount": "25.00",
+      "fee": "0.001",
+      "total_charged": "25.001",
+      "new_balance": "124.999",
+      "tx_hash": "0xdef456...sui_tx"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Transaction History {{ tag: 'GET', label: '/v1/wallet/transactions' }}
+
+<Row>
+  <Col>
+
+    Get a paginated list of all wallet transactions.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="type" type="enum">
+        Filter by type: `topup`, `payout`, `subscription`, `donation`, `storage`.
+      </Property>
+      <Property name="limit" type="integer">
+        Number of results (default: 10).
+      </Property>
+      <Property name="cursor" type="string">
+        Pagination cursor.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/wallet/transactions">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/wallet/transactions \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d limit=10
+    ```
+
+    ```js
+    const transactions = await client.wallet.transactions({
+      limit: 10,
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "data": [
+        {
+          "id": "tx_abc123",
+          "type": "subscription",
+          "amount": "-10.00",
+          "description": "Subscribe to @creator",
+          "created_at": 1709312400,
+          "tx_hash": "0x..."
+        },
+        {
+          "id": "tx_xyz789",
+          "type": "donation",
+          "amount": "-5.00",
+          "description": "Donation to @creator",
+          "created_at": 1709226000,
+          "tx_hash": "0x..."
+        },
+        {
+          "id": "tx_def456",
+          "type": "topup",
+          "amount": "+50.00",
+          "description": "Top up from external wallet",
+          "created_at": 1709139600,
+          "tx_hash": "0x..."
+        }
+      ],
+      "has_more": true,
+      "next_cursor": "tx_cursor"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Wallet Flow: Top Up
+
+```
+User clicks "Top Up" in wallet section
+         ↓
+Dialog shows:
+  - Current Zing wallet address
+  - "Connect External Wallet" button
+  - Amount input field
+         ↓
+User connects external Sui wallet (e.g., Sui Wallet, Martian)
+         ↓
+User enters amount to transfer
+         ↓
+User clicks "Transfer" button
+         ↓
+Transaction signed in external wallet
+         ↓
+USDC transferred to Zing wallet
+         ↓
+Balance updated, success notification
+```
+
+## Wallet Flow: Payout
+
+```
+User clicks "Withdraw" in wallet section
+         ↓
+Dialog shows:
+  - Current balance
+  - Amount input field
+  - Destination Sui address field
+  - Fee breakdown
+  - "Total to receive" calculation
+         ↓
+User enters amount and destination address
+         ↓
+Validation:
+  - Amount >= 1 USDC
+  - Amount <= balance
+  - Valid Sui address format
+         ↓
+User clicks "Withdraw" button
+         ↓
+Transaction submitted to Sui blockchain
+         ↓
+Funds sent to destination address
+         ↓
+Confirmation shown with tx hash
+```
+
+## Fees Summary
+
+| Action               | Fee                   |
+| -------------------- | --------------------- |
+| **Top Up**           | ~0.001 USDC (Sui gas) |
+| **Payout**           | 0.001 USDC            |
+| **Subscription**     | 0.001 USDC            |
+| **Donation**         | 0.001 USDC            |
+| **Storage Purchase** | 0.001 USDC            |
+
+<Note>
+  All fees go to Sui blockchain network, not Zing Protocol. The platform takes a
+  5% cut on transactions, not fees.
+</Note>
+
+## Balance Requirements
+
+| Action              | Minimum Balance       |
+| ------------------- | --------------------- |
+| Subscribe (Basic)   | Tier price + fee      |
+| Subscribe (Premium) | Tier price + fee      |
+| Subscribe (Ultra)   | Tier price + fee      |
+| Donate              | Donation amount + fee |
+| Storage Purchase    | Storage cost + fee    |
+| Withdraw            | 1 USDC + fee          |
+
+## Security
+
+<Note>
+  **Double-check Addresses**: Always verify the destination address before
+  withdrawing. Blockchain transactions are irreversible.
+</Note>
+
+<Note>
+  **Small Test Amount**: For first-time withdrawals, consider sending a small
+  test amount first.
+</Note>
+
+## Next Steps
+
+- [Subscriptions](/subscriptions) - Subscribe to creators
+- [Donations](/donations) - Support your favorite creators
+- [Earnings](/earnings) - View your complete financial dashboard

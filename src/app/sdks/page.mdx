@@ -1,17 +1,130 @@
-import { Libraries } from '@/components/Libraries'
-
 export const metadata = {
-  title: 'Protocol SDKs',
+  title: 'SDKs',
   description:
-    'Protocol offers fine-tuned JavaScript, Ruby, PHP, Python, and Go libraries to make your life easier and give you the best experience when consuming the API.',
+    'Official and community SDKs for integrating with the Zing Protocol API.',
 }
 
-export const sections = [
-  { title: 'Official libraries', id: 'official-libraries' },
-]
+# SDKs
 
-# Protocol SDKs
+Official SDKs for interacting with the Zing Protocol API. These client libraries handle authentication, transaction signing, and all API interactions behind the scenes. {{ className: 'lead' }}
 
-The recommended way to interact with the Protocol API is by using one of our official SDKs. Today, Protocol offers fine-tuned JavaScript, Ruby, PHP, Python, and Go libraries to make your life easier and give you the best experience when consuming the API. {{ className: 'lead' }}
+## Official SDKs
 
-<Libraries />
+### Node.js
+
+```bash {{ title: 'Node.js' }}
+npm install @zing/sdk
+```
+
+```js
+import { ZingClient } from '@zing/sdk'
+
+const client = new ZingClient({
+  provider: 'google', // zkLogin provider
+})
+
+await client.connect()
+const articles = await client.articles.list()
+```
+
+### Python
+
+```bash {{ title: 'Python' }}
+pip install zing-sdk
+```
+
+```python
+from zing_sdk import ZingClient
+
+client = ZingClient(provider='google')
+client.connect()
+articles = client.articles.list()
+```
+
+### Go
+
+```bash {{ title: 'Go' }}
+go get github.com/zing-protocol/zing-go
+```
+
+```go
+import "github.com/zing-protocol/zing-go"
+
+client := zing.NewClient(zing.Config{Provider: "google"})
+err := client.Connect()
+```
+
+### Rust
+
+```toml {{ title: 'Cargo.toml' }}
+zing-sdk = "0.1.0"
+```
+
+---
+
+## Authentication
+
+All SDKs handle zkLogin authentication automatically:
+
+```typescript
+// The SDK manages:
+// 1. Ephemeral keypair generation
+// 2. Nonce creation
+// 3. Google OAuth flow
+// 4. zkProof generation
+// 5. Session persistence
+
+await client.connect() // Handles everything
+```
+
+---
+
+## SDK Features
+
+| Feature             | Description                 |
+| ------------------- | --------------------------- |
+| **zkLogin**         | Google OAuth authentication |
+| **Wallet**          | USDC balance management     |
+| **Articles**        | Content CRUD operations     |
+| **Subscriptions**   | Subscribe/manage tiers      |
+| **Donations**       | Send/receive donations      |
+| **Knowledge Graph** | Query extracted triples     |
+| **Pay-Per-Query**   | AI agent micro-transactions |
+
+---
+
+## Community SDKs
+
+| Language | Package     | Status    |
+| -------- | ----------- | --------- |
+| Ruby     | `zing-ruby` | Community |
+| PHP      | `zing-php`  | Community |
+| Java     | `zing-java` | Community |
+
+<Note>
+  Community SDKs are not officially supported but are welcomed contributions.
+</Note>
+
+---
+
+## TypeScript Support
+
+All official SDKs include TypeScript types:
+
+```typescript
+import type {
+  Article,
+  Subscription,
+  Donation,
+  WalletBalance,
+  KnowledgeTriple,
+} from '@zing/sdk'
+```
+
+---
+
+## Getting Help
+
+- [Authentication](/authentication) - Learn about zkLogin
+- [Quickstart](/quickstart) - Get started
+- [Platform Architecture](/platform-architecture) - Technical stack

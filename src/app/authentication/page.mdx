@@ -1,41 +1,207 @@
 export const metadata = {
   title: 'Authentication',
   description:
-    'In this guide, we’ll look at how authentication works. Protocol offers two ways to authenticate your API requests: Basic authentication and OAuth2 with a token.',
+    'Learn how Zing Protocol uses zkLogin for seamless Web2-style authentication with Google OAuth, no seed phrases required.',
 }
 
 # Authentication
 
-You'll need to authenticate your requests to access any of the endpoints in the Protocol API. In this guide, we'll look at how authentication works. Protocol offers two ways to authenticate your API requests: Basic authentication and OAuth2 with a token — OAuth2 is the recommended way. {{ className: 'lead' }}
+Zing Protocol uses **zkLogin** to provide a Web2-style authentication experience. You can sign in with your Google account — no seed phrases, no private keys, no crypto complexity. This guide explains how the authentication system works. {{ className: 'lead' }}
 
-## Basic authentication
+## How zkLogin Works
 
-With basic authentication, you use your username and password to authenticate your HTTP requests. Unless you have a very good reason, you probably shouldn't use basic auth. Here's how to authenticate using cURL:
+zkLogin is a groundbreaking authentication method that bridges Web2 ease-of-use with Web3 capabilities:
 
-```bash {{ title: 'Example request with basic auth' }}
-curl https://api.protocol.chat/v1/conversations \
-  -u username:password
+1. **Ephemeral Keypair** - A temporary keypair is generated in your browser
+2. **Nonce Creation** - A unique nonce is created for this session
+3. **Google OAuth** - You authenticate with your Google account
+4. **zkProof Generation** - A zero-knowledge proof is generated proving you're the Google user
+5. **Sui Address Derivation** - Your Sui address is deterministically derived from your Google account
+
+```typescript
+// Authentication flow in the app
+const login = useWalletStore((s) => s.login)
+await login('google') // Initiates Google OAuth flow
+
+// Session data stored in zkloginStorage
+interface ZkLoginSession {
+  jwt: string // JWT token from Google
+  suiAddress: string // Your Sui blockchain address
+  maxEpoch: number // Session expiration epoch
+  ephemeralSecretKey: string // Temporary signing key
+  zkProof: object // Zero-knowledge proof
+}
 ```
 
-Please don't commit your Protocol password to GitHub!
+## The Authentication Flow
 
-## OAuth2 with bearer token
+### Step 1: Initiate Login
 
-The recommended way to authenticate with the Protocol API is by using OAuth2. When establishing a connection using OAuth2, you will need your access token — you will find it in the [Protocol dashboard](#) under API settings. Here's how to add the token to the request header using cURL:
+When you click "Continue with Google":
 
-```bash {{ title: 'Example request with bearer token' }}
-curl https://api.protocol.chat/v1/conversations \
-  -H "Authorization: Bearer {token}"
+```bash
+# Frontend generates ephemeral keypair
+const ephemeralKeyPair = new Ed25519Keypair();
+
+// Create nonce for this session
+const nonce = generateNonce(ephemeralKeyPair.getPublicKey());
+
+// Redirect to Google OAuth
+window.location.href = `${googleAuthUrl}?nonce=${nonce}`;
 ```
 
-Always keep your token safe and reset it if you suspect it has been compromised.
+### Step 2: Google OAuth
 
-## Using an SDK
+You complete authentication with Google in their standard OAuth flow:
 
-If you use one of our official SDKs, you won't have to worry about any of the above — fetch your access token from the [Protocol dashboard](#) under API settings, and the client library will take care of the rest. All the client libraries use OAuth2 behind the scenes.
+```bash
+# Google OAuth parameters
+{
+  client_id: YOUR_GOOGLE_CLIENT_ID,
+  redirect_uri: YOUR_APP_REDIRECT_URI,
+  response_type: "id_token",
+  scope: "openid email profile",
+  nonce: PROVIDED_NONCE,
+}
+```
+
+### Step 3: Return with JWT
+
+Google redirects back with an ID token (JWT):
+
+```json
+{
+  "sub": "google-user-id",
+  "email": "user@gmail.com",
+  "name": "Creator Name",
+  "picture": "https://...",
+  "nonce": "provided-nonce"
+}
+```
+
+### Step 4: Generate zkProof
+
+The frontend generates a zkProof using the JWT:
+
+```typescript
+// Using @mysten/sui SDK
+const zkProof = await generateZkProof({
+  jwt: idToken,
+  ephemeralPublicKey: ephemeralKeyPair.getPublicKey(),
+  maxEpoch: currentEpoch + 10,
+  nonce: providedNonce,
+})
+```
+
+### Step 5: Derive Sui Address
+
+Your Sui address is derived from the Google user ID and a salt:
+
+```bash
+# Address derivation (simplified)
+suiAddress = f(googleUserId, salt, ephemeralPublicKey)
+
+# Example Sui address
+0x7a8d9c0b1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b
+```
+
+## Session Management
+
+Sessions are persisted in localStorage via `zkloginStorage`:
+
+```typescript
+// Session is automatically managed by the wallet store
+const isConnected = useWalletStore((s) => s.isConnected)
+const suiAddress = useWalletStore((s) => s.suiAddress)
+
+// Logout clears the session
+const logout = useWalletStore((s) => s.logout)
+await logout()
+```
+
+## Supported Providers
+
+Currently, only **Google** is supported for zkLogin:
+
+| Provider | Status       | Notes                            |
+| -------- | ------------ | -------------------------------- |
+| Google   | ✅ Supported | Full OAuth + zkLogin integration |
+| Twitch   | 🔜 Planned   | Coming soon                      |
+| Facebook | 🔜 Planned   | Coming soon                      |
+| Apple    | 🔜 Planned   | Coming soon                      |
+
+## Security Considerations
+
+### Key Features
+
+- **No Seed Phrases** - Your Google account is the only auth factor
+- **Zero-Knowledge Proofs** - Google never sees your Sui address
+- **Ephemeral Keys** - Temporary keys expire automatically
+- **Sui Native** - All transactions are native to Sui blockchain
+
+### Session Expiration
+
+```typescript
+// Sessions expire after maxEpoch
+interface ZkLoginSession {
+  maxEpoch: number // After this epoch, session is invalid
+}
+
+// To continue using after expiration:
+// Must re-authenticate with Google
+```
+
+## Using the API
+
+When making API requests, authentication is handled automatically:
+
+```bash
+# All API requests include the JWT from zkLogin
+curl https://api.zing.protocol/v1/articles \
+  -H "Authorization: Bearer {jwt_token}"
+
+# The backend validates the JWT and extracts the Sui address
+```
+
+## Integration with SDKs
+
+```typescript
+// Using the Zing SDK (when available)
+import { ZingClient } from '@zing/sdk'
+
+const client = new ZingClient({
+  provider: 'google', // or 'twitch' etc.
+})
+
+// SDK handles all zkLogin complexity
+await client.connect()
+```
 
 <div className="not-prose">
   <Button href="/sdks" variant="text" arrow="right">
-    <>Check out our list of first-party SDKs</>
+    <>Learn about available SDKs</>
   </Button>
 </div>
+
+## Best Practices
+
+<Note>
+  **Security**: Never share your Google credentials. Zing Protocol will never
+  ask for your Google password.
+</Note>
+
+<Note>
+  **Session Management**: For maximum security, log out when done using public
+  computers.
+</Note>
+
+<Note>
+  **Backup**: While zkLogin removes seed phrase complexity, ensure your Google
+  account has proper recovery options.
+</Note>
+
+## Next Steps
+
+- [Platform Architecture](/platform-architecture) - Understand the technical stack
+- [Quickstart](/quickstart) - Get started with the platform
+- [Wallet](/wallet) - Learn about managing USDC

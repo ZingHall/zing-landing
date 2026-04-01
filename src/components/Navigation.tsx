@@ -234,26 +234,35 @@ function NavigationGroup({
 
 export const navigation: Array<NavGroup> = [
   {
-    title: 'Guides',
+    title: 'Platform Overview',
     links: [
       { title: 'Introduction', href: '/' },
       { title: 'Quickstart', href: '/quickstart' },
-      { title: 'SDKs', href: '/sdks' },
       { title: 'Authentication', href: '/authentication' },
-      { title: 'Pagination', href: '/pagination' },
-      { title: 'Errors', href: '/errors' },
-      { title: 'Webhooks', href: '/webhooks' },
+      { title: 'Platform Architecture', href: '/platform-architecture' },
     ],
   },
   {
-    title: 'Resources',
+    title: 'Creator Features',
     links: [
-      { title: 'Contacts', href: '/contacts' },
-      { title: 'Conversations', href: '/conversations' },
-      { title: 'Messages', href: '/messages' },
-      { title: 'Groups', href: '/groups' },
-      { title: 'Attachments', href: '/attachments' },
+      { title: 'Content API', href: '/content' },
+      { title: 'Subscriptions', href: '/subscriptions' },
+      { title: 'Donations', href: '/donations' },
+      { title: 'Wallet', href: '/wallet' },
     ],
+  },
+  {
+    title: 'Knowledge Marketplace',
+    links: [
+      { title: 'Knowledge Graph', href: '/knowledge-graph' },
+      { title: 'Pay-Per-Query API', href: '/pay-per-query' },
+      { title: 'Attribution Ledger', href: '/attribution-ledger' },
+      { title: 'Synthesis', href: '/synthesis' },
+    ],
+  },
+  {
+    title: 'API Reference',
+    links: [{ title: 'SDKs', href: '/sdks' }],
   },
 ]
 

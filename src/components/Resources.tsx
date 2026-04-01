@@ -10,8 +10,8 @@ import Link from 'next/link'
 
 import { GridPattern } from '@/components/GridPattern'
 import { Heading } from '@/components/Heading'
-import { ChatBubbleIcon } from '@/components/icons/ChatBubbleIcon'
-import { EnvelopeIcon } from '@/components/icons/EnvelopeIcon'
+import { BoltIcon } from '@/components/icons/BoltIcon'
+import { CogIcon } from '@/components/icons/CogIcon'
 import { UserIcon } from '@/components/icons/UserIcon'
 import { UsersIcon } from '@/components/icons/UsersIcon'
 
@@ -28,11 +28,11 @@ interface Resource {
 
 const resources: Array<Resource> = [
   {
-    href: '/contacts',
-    name: 'Contacts',
+    href: '/content',
+    name: 'Content API',
     description:
-      'Learn about the contact model and how to create, retrieve, update, delete, and list contacts.',
-    icon: UserIcon,
+      'Create, manage, and monetize articles with Walrus storage and SEAL encryption.',
+    icon: BoltIcon,
     pattern: {
       y: 16,
       squares: [
@@ -42,11 +42,10 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/conversations',
-    name: 'Conversations',
-    description:
-      'Learn about the conversation model and how to create, retrieve, update, delete, and list conversations.',
-    icon: ChatBubbleIcon,
+    href: '/subscriptions',
+    name: 'Subscriptions',
+    description: 'Set up tiered subscriptions for exclusive content access.',
+    icon: UsersIcon,
     pattern: {
       y: -6,
       squares: [
@@ -56,11 +55,11 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/messages',
-    name: 'Messages',
+    href: '/donations',
+    name: 'Donations',
     description:
-      'Learn about the message model and how to create, retrieve, update, delete, and list messages.',
-    icon: EnvelopeIcon,
+      'Receive one-time USDC payments from fans with optional messages.',
+    icon: UserIcon,
     pattern: {
       y: 32,
       squares: [
@@ -70,11 +69,11 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/groups',
-    name: 'Groups',
+    href: '/knowledge-graph',
+    name: 'Knowledge Graph',
     description:
-      'Learn about the group model and how to create, retrieve, update, delete, and list groups.',
-    icon: UsersIcon,
+      'Extract RDF triples for AI agent queries and semantic search.',
+    icon: CogIcon,
     pattern: {
       y: 22,
       squares: [[0, 1]],
@@ -85,7 +84,7 @@ const resources: Array<Resource> = [
 function ResourceIcon({ icon: Icon }: { icon: Resource['icon'] }) {
   return (
     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900/5 ring-1 ring-zinc-900/25 backdrop-blur-[2px] transition duration-300 group-hover:bg-white/50 group-hover:ring-zinc-900/25 dark:bg-white/7.5 dark:ring-white/15 dark:group-hover:bg-primary/10 dark:group-hover:ring-primary">
-      <Icon className="h-5 w-5 fill-zinc-700/10 stroke-zinc-700 transition-colors duration-300 group-hover:stroke-zinc-900 dark:fill-white/10 dark:stroke-zinc-400 dark:group-hover:fill-primary/10 dark:group-hover:stroke-primary" />
+      <Icon className="h-5 w-5 fill-zinc-700/10 stroke-zinc-700 transition-colors duration-300 group-hover:stroke-zinc-900 dark:fill-white/10 dark:stroke-zinc-400 dark:group-hover:stroke-primary" />
     </div>
   )
 }
@@ -174,7 +173,7 @@ export function Resources() {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="resources">
-        Resources
+        Platform Features
       </Heading>
       <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-zinc-900/5 pt-10 sm:grid-cols-2 xl:grid-cols-4 dark:border-white/5">
         {resources.map((resource) => (

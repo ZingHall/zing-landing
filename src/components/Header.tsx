@@ -74,16 +74,21 @@ export const Header = forwardRef<
       <Search />
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
-        <CloseButton as={Link} href="/" aria-label="Home" className="flex items-center justify-center gap-2">
+        <CloseButton
+          as={Link}
+          href="/"
+          aria-label="Home"
+          className="flex items-center justify-center gap-2"
+        >
           <Logo className="h-5 w-5" />
-          <h1 className='font-bold text-lg'>Zing</h1>
+          <h1 className="text-lg font-bold">Zing</h1>
         </CloseButton>
       </div>
       <div className="flex items-center gap-5">
         <nav className="hidden md:block">
           <ul role="list" className="flex items-center gap-8">
-            <TopLevelNavItem href="/">API</TopLevelNavItem>
-            <TopLevelNavItem href="#">Documentation</TopLevelNavItem>
+            <TopLevelNavItem href="/">Docs</TopLevelNavItem>
+            <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>
             <TopLevelNavItem href="#">Support</TopLevelNavItem>
           </ul>
         </nav>

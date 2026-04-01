@@ -1,0 +1,343 @@
+export const metadata = {
+  title: 'Subscriptions',
+  description:
+    'Learn how the subscription system works on Zing Protocol, including tier management and subscription transactions.',
+}
+
+# Subscriptions
+
+Zing Protocol's subscription system allows creators to monetize their content through tiered access. Subscribers pay USDC to access premium content from their favorite creators. {{ className: 'lead' }}
+
+## Subscription Tiers
+
+Creators can configure up to 3 subscription tiers:
+
+| Tier        | Storage | Typical Price    | Purpose           |
+| ----------- | ------- | ---------------- | ----------------- |
+| **Basic**   | ~5 GB   | Free or low cost | Casual supporters |
+| **Premium** | ~20 GB  | $5-20/mo         | Active fans       |
+| **Ultra**   | ~100 GB | $20-100/mo       | Super fans        |
+
+## The Subscription Model
+
+### Properties
+
+<Properties>
+  <Property name="id" type="string">
+    Unique identifier for the subscription.
+  </Property>
+  <Property name="subscriber" type="string">
+    Sui address of the subscriber.
+  </Property>
+  <Property name="creator" type="string">
+    Sui address of the content creator.
+  </Property>
+  <Property name="tier" type="enum">
+    Subscription tier: `basic`, `premium`, or `ultra`.
+  </Property>
+  <Property name="price" type="string">
+    Subscription price in USDC (e.g., "5.00").
+  </Property>
+  <Property name="created_at" type="timestamp">
+    Timestamp when subscription started.
+  </Property>
+  <Property name="expired_at" type="timestamp">
+    Timestamp when subscription expires.
+  </Property>
+  <Property name="status" type="enum">
+    Status: `active`, `expired`, or `cancelled`.
+  </Property>
+</Properties>
+
+---
+
+## Subscribe to Creator {{ tag: 'POST', label: '/v1/subscribe' }}
+
+<Row>
+  <Col>
+
+    Subscribe to a creator at a specific tier. This creates a recurring subscription.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="creator" type="string">
+        The Sui address of the creator to subscribe to.
+      </Property>
+      <Property name="tier" type="enum">
+        Subscription tier: `basic`, `premium`, or `ultra`.
+      </Property>
+    </Properties>
+
+    ### Transaction fees
+
+    A small transaction fee (~$0.001) applies for the Sui blockchain transaction.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/subscribe">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/subscribe \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d creator="0x123...creator" \
+      -d tier="premium"
+    ```
+
+    ```js
+    const subscription = await client.subscriptions.subscribe({
+      creator: '0x123...creator',
+      tier: 'premium',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "id": "sub_abc123",
+      "subscriber": "0x456...subscriber",
+      "creator": "0x123...creator",
+      "tier": "premium",
+      "price": "10.00",
+      "created_at": 1709312400,
+      "expired_at": 1711990800,
+      "status": "active"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## List My Subscriptions {{ tag: 'GET', label: '/v1/subscriptions' }}
+
+<Row>
+  <Col>
+
+    Get all subscriptions for the authenticated user (as subscriber).
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="status" type="enum">
+        Filter by status: `active`, `expired`, `cancelled`.
+      </Property>
+      <Property name="limit" type="integer">
+        Number of results to return (default: 10).
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/subscriptions">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/subscriptions \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d status="active"
+    ```
+
+    ```js
+    const subscriptions = await client.subscriptions.list({
+      status: 'active',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "data": [
+        {
+          "id": "sub_abc123",
+          "creator": "0x123...creator",
+          "tier": "premium",
+          "price": "10.00",
+          "created_at": 1709312400,
+          "expired_at": 1711990800,
+          "status": "active"
+        }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## List Creator's Subscribers {{ tag: 'GET', label: '/v1/creators/:address/subscribers' }}
+
+<Row>
+  <Col>
+
+    Get all subscribers for a creator (creator only).
+
+    ### Path parameters
+
+    <Properties>
+      <Property name="address" type="string">
+        The creator's Sui address.
+      </Property>
+    </Properties>
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="tier" type="enum">
+        Filter by tier: `basic`, `premium`, `ultra`.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/creators/0x123.../subscribers">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/creators/0x123.../subscribers \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const subscribers = await client.creators.subscribers('0x123...');
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "data": [
+        {
+          "id": "sub_abc123",
+          "subscriber": "0x456...subscriber",
+          "tier": "premium",
+          "price": "10.00",
+          "created_at": 1709312400,
+          "expired_at": 1711990800,
+          "status": "active"
+        }
+      ],
+      "total_count": 150,
+      "tier_counts": {
+        "basic": 80,
+        "premium": 50,
+        "ultra": 20
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Cancel Subscription {{ tag: 'DELETE', label: '/v1/subscriptions/:id' }}
+
+<Row>
+  <Col>
+
+    Cancel a subscription. The subscription remains active until the expiration date.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/v1/subscriptions/sub_abc123">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://api.zing.protocol/v1/subscriptions/sub_abc123 \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    await client.subscriptions.cancel('sub_abc123');
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Subscription Flow
+
+```
+User views locked content
+         ↓
+Content shows paywall with tier badge
+         ↓
+User clicks "Subscribe" button
+         ↓
+Subscription dialog shows available tiers
+         ↓
+User selects tier and confirms
+         ↓
+Transaction: USDC deducted from wallet
+         ↓
+Subscription created on Sui blockchain
+         ↓
+Access granted to content
+         ↓
+User can view full content
+```
+
+## Subscription Pricing
+
+Creators set their own prices for each tier:
+
+```typescript
+// Example pricing configuration
+const pricing = {
+  basic: {
+    storage_gb: 5,
+    price_usdc: '1.00', // $1/month
+  },
+  premium: {
+    storage_gb: 20,
+    price_usdc: '10.00', // $10/month
+  },
+  ultra: {
+    storage_gb: 100,
+    price_usdc: '50.00', // $50/month
+  },
+}
+```
+
+## Revenue Model
+
+| Stream            | Fee Structure                |
+| ----------------- | ---------------------------- |
+| **Subscriptions** | 95% Creator / 5% Platform    |
+| **Donations**     | 95% Creator / 5% Platform    |
+| **Referrals**     | 5-10% commission to referrer |
+
+<Note>
+  **Platform Fee**: Zing Protocol takes a 5% platform fee on all transactions to
+  support platform development.
+</Note>
+
+## Checking Subscription Access
+
+```typescript
+// Check if user has access to content
+const { data: memberInfo } = useZingQuery({
+  method: 'getMember',
+  params: [creatorAddress, suiAddress],
+})
+
+const hasAccess =
+  memberInfo &&
+  Number(memberInfo.expired_at) > Date.now() &&
+  memberInfo.level >= requiredLevel
+```
+
+## Next Steps
+
+- [Donations](/donations) - Enable one-time donations
+- [Wallet](/wallet) - Manage your USDC balance
+- [Referral](/referral) - Earn commission by referring creators

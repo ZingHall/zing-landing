@@ -1,0 +1,409 @@
+export const metadata = {
+  title: 'Knowledge Graph',
+  description:
+    'Learn about the Knowledge Graph API for extracting RDF triples from content and enabling AI agent queries.',
+}
+
+# Knowledge Graph API
+
+The Knowledge Graph API enables AI agents and researchers to query structured data extracted from creator content. Knowledge triples (Subject → Predicate → Object) are automatically extracted from articles and stored for semantic querying. {{ className: 'lead' }}
+
+<Note>
+  **Status**: Knowledge Graph extraction is currently in development. The API
+  endpoints below represent the planned implementation.
+</Note>
+
+## What is a Knowledge Triple?
+
+Knowledge triples are the basic unit of the Knowledge Market:
+
+```
+Subject → Predicate → Object
+
+Example:
+"Creator Alice" → "published" → "Article about AI"
+```
+
+This structured format allows AI agents to:
+
+- Query specific facts across multiple articles
+- Build semantic understanding of content relationships
+- Perform complex reasoning over creator knowledge bases
+
+## The Knowledge Triple Model
+
+### Properties
+
+<Properties>
+  <Property name="id" type="string">
+    Unique identifier for the triple.
+  </Property>
+  <Property name="subject" type="string">
+    The subject entity (e.g., creator address, article ID).
+  </Property>
+  <Property name="predicate" type="string">
+    The relationship (e.g., "published", "discussed", "analyzed").
+  </Property>
+  <Property name="object" type="string">
+    The object entity (e.g., article ID, topic).
+  </Property>
+  <Property name="blob_id" type="string">
+    The Walrus blob ID of the source content.
+  </Property>
+  <Property name="confidence" type="number">
+    Extraction confidence score (0-1).
+  </Property>
+  <Property name="created_at" type="timestamp">
+    When the triple was extracted.
+  </Property>
+</Properties>
+
+---
+
+## Extract Triples {{ tag: 'POST', label: '/v1/kg/extract' }}
+
+<Row>
+  <Col>
+
+    Extract knowledge triples from an article. This is automatically done when content is published, but can also be triggered manually.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="article_id" type="string">
+        The article to extract triples from.
+      </Property>
+    </Properties>
+
+    ### How it works
+
+    1. LLM processes article content
+    2. Identifies entities (subjects) and relationships (predicates)
+    3. Generates RDF triples
+    4. Stores triples linked to Walrus blob ID
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/kg/extract">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/kg/extract \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d article_id="walrus_blob_abc123"
+    ```
+
+    ```js
+    const extraction = await client.knowledgeGraph.extract({
+      articleId: 'walrus_blob_abc123',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "article_id": "walrus_blob_abc123",
+      "triples_extracted": 15,
+      "triples": [
+        {
+          "id": "triple_001",
+          "subject": "0xcreator...alice",
+          "predicate": "published",
+          "object": "walrus_blob_abc123",
+          "confidence": 0.95
+        },
+        {
+          "id": "triple_002",
+          "subject": "walrus_blob_abc123",
+          "predicate": "discusses",
+          "object": "artificial_intelligence",
+          "confidence": 0.88
+        }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Article Triples {{ tag: 'GET', label: '/v1/kg/triples/:article_id' }}
+
+<Row>
+  <Col>
+
+    Retrieve all knowledge triples extracted from a specific article.
+
+    ### Path parameters
+
+    <Properties>
+      <Property name="article_id" type="string">
+        The article ID to get triples for.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/kg/triples/walrus_blob_abc123">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/kg/triples/walrus_blob_abc123 \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const triples = await client.knowledgeGraph.getTriples(
+      'walrus_blob_abc123'
+    );
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "article_id": "walrus_blob_abc123",
+      "triples": [
+        {
+          "id": "triple_001",
+          "subject": "0xcreator...alice",
+          "predicate": "published",
+          "object": "walrus_blob_abc123",
+          "confidence": 0.95,
+          "created_at": 1709312400
+        }
+      ],
+      "total_count": 15
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Search Triples {{ tag: 'GET', label: '/v1/kg/search' }}
+
+<Row>
+  <Col>
+
+    Search across all knowledge triples. Supports filtering by subject, predicate, object, and creator.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="subject" type="string">
+        Filter by subject entity.
+      </Property>
+      <Property name="predicate" type="string">
+        Filter by predicate.
+      </Property>
+      <Property name="object" type="string">
+        Filter by object entity.
+      </Property>
+      <Property name="creator" type="string">
+        Filter by creator address.
+      </Property>
+      <Property name="query" type="string">
+        Natural language query (when using AI search).
+      </Property>
+      <Property name="limit" type="integer">
+        Number of results (default: 10).
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/kg/search">
+
+    ```bash {{ title: 'cURL' }}
+    curl "https://api.zing.protocol/v1/kg/search?predicate=discusses&object=AI" \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const results = await client.knowledgeGraph.search({
+      predicate: 'discusses',
+      object: 'AI',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "results": [
+        {
+          "id": "triple_002",
+          "subject": "0xcreator...alice",
+          "predicate": "discusses",
+          "object": "artificial_intelligence",
+          "blob_id": "walrus_blob_abc123",
+          "confidence": 0.88,
+          "creator": "0xcreator...alice"
+        },
+        {
+          "id": "triple_042",
+          "subject": "0xcreator...bob",
+          "predicate": "discusses",
+          "object": "machine_learning",
+          "blob_id": "walrus_blob_xyz789",
+          "confidence": 0.92,
+          "creator": "0xcreator...bob"
+        }
+      ],
+      "total_count": 42,
+      "query_time_ms": 15
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Creator Knowledge Graph {{ tag: 'GET', label: '/v1/kg/creators/:address' }}
+
+<Row>
+  <Col>
+
+    Get the aggregated knowledge graph for a specific creator. Shows all triples from their content.
+
+    ### Path parameters
+
+    <Properties>
+      <Property name="address" type="string">
+        The creator's Sui address.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/kg/creators/0xcreator...alice">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/kg/creators/0xcreator...alice \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const kg = await client.knowledgeGraph.forCreator(
+      '0xcreator...alice'
+    );
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "creator": "0xcreator...alice",
+      "total_triples": 1250,
+      "total_articles": 45,
+      "top_predicates": [
+        { "predicate": "discusses", "count": 320 },
+        { "predicate": "analyzes", "count": 180 },
+        { "predicate": "compares", "count": 95 }
+      ],
+      "top_objects": [
+        { "object": "AI", "count": 85 },
+        { "object": "blockchain", "count": 62 },
+        { "object": "web3", "count": 48 }
+      ],
+      "recent_triples": [...]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Extraction Process
+
+```
+Article Published
+       ↓
+LLM Processing
+       ↓
+┌─────────────────────────────────────────┐
+│  Entity Recognition                      │
+│  - Creators, Articles, Topics            │
+└─────────────────────────────────────────┘
+       ↓
+┌─────────────────────────────────────────┐
+│  Relationship Detection                  │
+│  - published, discusses, analyzes        │
+│  - created, updated, referenced          │
+└─────────────────────────────────────────┘
+       ↓
+┌─────────────────────────────────────────┐
+│  Triple Generation                       │
+│  Subject → Predicate → Object            │
+└─────────────────────────────────────────┘
+       ↓
+┌─────────────────────────────────────────┐
+│  Confidence Scoring                      │
+│  - Based on extraction clarity           │
+│  - Stored with each triple               │
+└─────────────────────────────────────────┘
+       ↓
+Stored in Graph Database
+(Neo4j / SurrealDB)
+       ↓
+Available for Query
+```
+
+## Use Cases
+
+| Use Case                 | Description                                    |
+| ------------------------ | ---------------------------------------------- |
+| **Research**             | AI agents query facts across multiple creators |
+| **Recommendations**      | Suggest articles based on knowledge overlap    |
+| **Trend Analysis**       | Track topics discussed across the platform     |
+| **Plagiarism Detection** | Identify copied content via similar triples    |
+| **Sponsorship Matching** | Match brands to creators by topic alignment    |
+
+## Integration with Pay-Per-Query
+
+Knowledge triples are the basis for the Pay-Per-Query system:
+
+```
+Query Request → Payment Verification → Triple Access
+     ↓
+     ↓         (via PPQ Rails)
+     ↓
+Locked until query fee paid
+     ↓
+AI agent receives triple data
+```
+
+<div className="not-prose">
+  <Button href="/pay-per-query" variant="text" arrow="right">
+    <>Learn about Pay-Per-Query API</>
+  </Button>
+</div>
+
+## Technical Details
+
+| Component          | Technology                |
+| ------------------ | ------------------------- |
+| **Graph Database** | Neo4j or SurrealDB        |
+| **Extraction**     | LLM-based (configurable)  |
+| **Storage**        | Linked to Walrus blob IDs |
+| **Access**         | Via Pay-Per-Query rails   |
+
+## Coming Soon
+
+- **Multi-modal extraction** - Extract triples from images
+- **Temporal knowledge** - Time-series knowledge graphs
+- **Cross-lingual KG** - Multi-language support
+
+## Next Steps
+
+- [Pay-Per-Query API](/pay-per-query) - Learn how to access triples
+- [Attribution Ledger](/attribution-ledger) - Track AI usage
+- [Synthesis](/synthesis) - Multi-source research

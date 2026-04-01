@@ -1,0 +1,308 @@
+export const metadata = {
+  title: 'Donations',
+  description:
+    'Learn how to send and receive one-time USDC donations on Zing Protocol.',
+}
+
+# Donations
+
+Donations allow supporters to send one-time USDC payments to creators as a way to show appreciation. Unlike subscriptions, donations are not recurring and can include a personal message. {{ className: 'lead' }}
+
+## The Donation Model
+
+### Properties
+
+<Properties>
+  <Property name="id" type="string">
+    Unique identifier for the donation transaction.
+  </Property>
+  <Property name="donor" type="string">
+    Sui address of the donor.
+  </Property>
+  <Property name="creator" type="string">
+    Sui address of the receiving creator.
+  </Property>
+  <Property name="amount" type="string">
+    Donation amount in USDC (max 6 decimal places).
+  </Property>
+  <Property name="message" type="string">
+    Optional message from the donor (max 30 words).
+  </Property>
+  <Property name="created_at" type="timestamp">
+    Timestamp of the donation.
+  </Property>
+  <Property name="tx_hash" type="string">
+    Sui blockchain transaction hash.
+  </Property>
+</Properties>
+
+---
+
+## Send Donation {{ tag: 'POST', label: '/v1/donate' }}
+
+<Row>
+  <Col>
+
+    Send a one-time donation to a creator.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="creator" type="string">
+        The Sui address of the creator to donate to.
+      </Property>
+      <Property name="amount" type="string">
+        Donation amount in USDC (e.g., "5.00").
+      </Property>
+    </Properties>
+
+    ### Optional attributes
+
+    <Properties>
+      <Property name="message" type="string">
+        A message to the creator (max 30 words).
+      </Property>
+    </Properties>
+
+    ### Limits
+
+    - Minimum donation: 0.01 USDC
+    - Maximum donation: 10,000 USDC
+    - Transaction fee: ~0.001 USDC
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/donate">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/donate \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d creator="0x123...creator" \
+      -d amount="5.00" \
+      -d message="Love your work!"
+    ```
+
+    ```js
+    const donation = await client.donations.send({
+      creator: '0x123...creator',
+      amount: '5.00',
+      message: 'Love your work!',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "id": "don_abc123",
+      "donor": "0x456...donor",
+      "creator": "0x123...creator",
+      "amount": "5.00",
+      "message": "Love your work!",
+      "created_at": 1709312400,
+      "tx_hash": "0xdef456...sui_tx_hash"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## List Donations Received {{ tag: 'GET', label: '/v1/creators/:address/donations' }}
+
+<Row>
+  <Col>
+
+    Get all donations received by a creator.
+
+    ### Path parameters
+
+    <Properties>
+      <Property name="address" type="string">
+        The creator's Sui address.
+      </Property>
+    </Properties>
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="limit" type="integer">
+        Number of results to return (default: 10).
+      </Property>
+      <Property name="cursor" type="string">
+        Pagination cursor for next page.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/creators/0x123.../donations">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/creators/0x123.../donations \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const donations = await client.donations.received('0x123...');
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "data": [
+        {
+          "id": "don_abc123",
+          "donor": "0x456...donor",
+          "amount": "5.00",
+          "message": "Love your work!",
+          "created_at": 1709312400
+        },
+        {
+          "id": "don_xyz789",
+          "donor": "0x789...donor",
+          "amount": "25.00",
+          "message": "Keep it up!",
+          "created_at": 1709226000
+        }
+      ],
+      "total_amount": "150.00",
+      "total_count": 42
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## List My Donations Made {{ tag: 'GET', label: '/v1/donations' }}
+
+<Row>
+  <Col>
+
+    Get all donations made by the authenticated user.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="limit" type="integer">
+        Number of results to return (default: 10).
+      </Property>
+      <Property name="cursor" type="string">
+        Pagination cursor for next page.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/donations">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/donations \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const myDonations = await client.donations.mine();
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "data": [
+        {
+          "id": "don_abc123",
+          "creator": "0x123...creator",
+          "amount": "5.00",
+          "message": "Love your work!",
+          "created_at": 1709312400
+        }
+      ],
+      "total_amount": "50.00",
+      "total_count": 10
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Donation Dialog Flow
+
+```
+User clicks "Donate" button on creator profile
+         ↓
+Donation dialog opens showing:
+  - Creator name and avatar
+  - User's USDC balance
+  - Amount input field
+  - Optional message textarea
+         ↓
+User enters amount and optional message
+         ↓
+Real-time validation:
+  - Amount must be > 0.01 USDC
+  - Amount must be <= balance
+  - Message max 30 words
+         ↓
+User clicks "Donate" button
+         ↓
+Transaction submitted to Sui blockchain
+         ↓
+Loading spinner during confirmation
+         ↓
+Success toast notification
+         ↓
+Balance updated, dialog closes
+```
+
+## Donation Best Practices
+
+<Note>
+  **Meaningful Amounts**: Even small donations (0.01-1 USDC) are appreciated and
+  help creators know their work resonates.
+</Note>
+
+<Note>
+  **Include a Message**: Adding a personal message makes donations more
+  meaningful to creators.
+</Note>
+
+<Note>
+  **Transaction Fees**: A small fee (~$0.001) applies to cover Sui blockchain
+  costs. 100% of your donation goes to the creator.
+</Note>
+
+## Use Cases
+
+| Scenario                    | Suggested Amount |
+| --------------------------- | ---------------- |
+| Quick appreciation          | 0.5 - 1 USDC     |
+| Monthly support             | 1 - 5 USDC       |
+| Special content support     | 5 - 25 USDC      |
+| Major milestone celebration | 25 - 100+ USDC   |
+
+## Revenue Tracking
+
+Creators can view all donations in their earnings dashboard:
+
+```typescript
+// Donation analytics
+const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0)
+const averageDonation = totalDonations / donations.length
+const donationCount = donations.length
+```
+
+## Next Steps
+
+- [Wallet](/wallet) - Manage your USDC balance
+- [Subscriptions](/subscriptions) - Set up recurring revenue
+- [Earnings](/earnings) - View your complete revenue dashboard

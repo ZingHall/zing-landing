@@ -1,0 +1,180 @@
+export const metadata = {
+  title: 'Platform Architecture',
+  description:
+    'Learn how Zing Protocol integrates Sui blockchain, Walrus storage, and SEAL encryption to power the Decentralized Knowledge Marketplace.',
+}
+
+# Platform Architecture
+
+Zing Protocol is a creator monetization platform built on the Sui blockchain that enables creators to own their content, monetize through subscriptions and donations, and leverage decentralized storage. This page dives into the technical architecture that makes this possible. {{ className: 'lead' }}
+
+## System Overview
+
+The Zing Protocol platform consists of several integrated layers:
+
+- **Sui Blockchain** - Core transaction and ownership layer
+- **Walrus Protocol** - Decentralized storage for content blobs
+- **SEAL Protocol** - Encryption for tiered content access
+- **Knowledge Graph** - RDF triple extraction for AI agent queries
+- **zkLogin** - Web2-style authentication without seed phrases
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Applications                       │
+│              (Web App, Mobile, API Clients)                     │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Sui Blockchain Layer                        │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
+│  │   zkLogin   │  │ Subscriptions│  │     Wallet (USDC)       │ │
+│  │   (Auth)    │  │   & Donations│  │   Balance & Transfers   │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Walrus Storage│  │SEAL Encryption│  │Knowledge Graph│
+│  (Content)    │  │ (Access Ctrl) │  │  (RDF Triples)│
+└───────────────┘  └───────────────┘  └───────────────┘
+```
+
+## Core Components
+
+### zkLogin Authentication
+
+zkLogin enables Web2-style authentication using Google OAuth. No seed phrases required.
+
+```typescript
+// Authentication flow
+const login = useWalletStore((s) => s.login)
+await login('google') // Triggers Google OAuth
+
+// Session persisted via zkloginStorage (Zustand)
+// Contains: jwt, suiAddress, maxEpoch, ephemeralSecretKey, zkProof
+```
+
+### Walrus Protocol Storage
+
+Content is stored on Walrus, a decentralized storage system on Sui. Each blob is identified by a unique ID.
+
+```typescript
+// Storage cost calculation
+const { encodedSize, writeCost } = storageCost(
+  walrusSystemState,
+  totalSize,
+  epochs, // Default 2 epochs
+)
+
+// Storage tiers
+// Basic: ~5 GB (Free)
+// Premium: ~20 GB ($X/month)
+// Premium+: ~100 GB ($XX/month)
+```
+
+### SEAL Protocol Encryption
+
+Content access is controlled via SEAL Protocol encryption. Subscribers receive decryption keys based on their subscription tier.
+
+```typescript
+// Access tiers
+Public    → No encryption (anyone can read)
+Basic     → Basic subscribers only
+Premium   → Premium subscribers only
+Ultra     → Ultra subscribers only
+```
+
+### Knowledge Graph Extraction
+
+Knowledge triples (Subject → Predicate → Object) are extracted from content via LLM processing.
+
+```typescript
+// Example Knowledge Triple
+{
+  subject: "0x123...creator",
+  predicate: "published",
+  object: "0x456...article",
+  blob_id: "walrus_blob_id"
+}
+```
+
+## Storage Tiers (Creator Energy)
+
+| Tier         | Storage Limit | Price     | Purpose                   |
+| ------------ | ------------- | --------- | ------------------------- |
+| **Basic**    | ~5 GB         | Free      | Casual creators           |
+| **Premium**  | ~20 GB        | $X/month  | Active creators           |
+| **Premium+** | ~100 GB       | $XX/month | High-volume professionals |
+
+## API Integration
+
+The Zing API is built on the Sui blockchain with RESTful endpoints:
+
+```bash
+# Base URL
+https://api.zing.protocol/v1
+
+# Key endpoints
+GET  /articles          # List articles
+POST /articles          # Create article
+GET  /subscriptions    # List subscriptions
+POST /subscribe         # Subscribe to creator
+POST /donate            # Donate to creator
+GET  /wallet/balance    # Get USDC balance
+POST /wallet/topup      # Top up wallet
+POST /wallet/payout     # Withdraw funds
+```
+
+## Data Flow: Content Creation
+
+```
+Creator → Write Content (TipTap Editor) → Configure Access Tier
+    ↓
+Calculate Storage Cost (Walrus) → Encrypt with SEAL
+    ↓
+Publish Transaction (Sui) → Upload to Walrus → Get Blob ID
+    ↓
+Content Available → Subscribers can access based on tier
+```
+
+## Data Flow: Subscription
+
+```
+Subscriber → Browse Creator → View Locked Content
+    ↓
+Click Subscribe → Select Tier → Sign Transaction
+    ↓
+Payment (USDC) → Update Subscription Status (Sui)
+    ↓
+Grant Access → Decryption Key Provided → Content Accessible
+```
+
+<Note>
+  The Knowledge Graph and Pay-Per-Query features are currently in development.
+  See the [Knowledge Graph](/knowledge-graph) and
+  [Pay-Per-Query](/pay-per-query) documentation for more details on upcoming
+  features.
+</Note>
+
+## Technology Stack
+
+| Layer          | Technology                                |
+| -------------- | ----------------------------------------- |
+| **Blockchain** | Sui (Mainnet/Testnet)                     |
+| **SDK**        | @mysten/sui, @mysten/walrus, @mysten/seal |
+| **Auth**       | zkLogin (Google OAuth)                    |
+| **Storage**    | Walrus Protocol                           |
+| **Encryption** | SEAL Protocol                             |
+| **Frontend**   | React 19, Next.js 16, Tailwind CSS v4     |
+| **State**      | TanStack Query, Zustand                   |
+
+## Next Steps
+
+- [Authentication](/authentication) - Learn how zkLogin works
+- [Quickstart](/quickstart) - Get started with creator onboarding
+- [Content API](/content) - Learn about content management
+- [Subscriptions](/subscriptions) - Understand the subscription system

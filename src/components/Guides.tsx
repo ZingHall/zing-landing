@@ -3,26 +3,24 @@ import { Heading } from '@/components/Heading'
 
 const guides = [
   {
+    href: '/quickstart',
+    name: 'Quickstart',
+    description: 'Get started with Zing Protocol in minutes.',
+  },
+  {
     href: '/authentication',
     name: 'Authentication',
-    description: 'Learn how to authenticate your API requests.',
+    description: 'Learn how zkLogin enables Web2-style auth.',
   },
   {
-    href: '/pagination',
-    name: 'Pagination',
-    description: 'Understand how to work with paginated responses.',
+    href: '/platform-architecture',
+    name: 'Architecture',
+    description: 'Understand the Sui, Walrus, and SEAL stack.',
   },
   {
-    href: '/errors',
-    name: 'Errors',
-    description:
-      'Read about the different types of errors returned by the API.',
-  },
-  {
-    href: '/webhooks',
-    name: 'Webhooks',
-    description:
-      'Learn how to programmatically configure webhooks for your app.',
+    href: '/wallet',
+    name: 'Wallet & Payments',
+    description: 'Manage USDC for subscriptions and donations.',
   },
 ]
 

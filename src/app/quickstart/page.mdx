@@ -1,98 +1,130 @@
 export const metadata = {
   title: 'Quickstart',
   description:
-    'This guide will get you all set up and ready to use the Protocol API. We’ll cover how to get started an API client and how to make your first API request.',
+    'Get started with Zing Protocol. Learn how to authenticate, create your studio, and publish your first piece of content.',
 }
 
 # Quickstart
 
-This guide will get you all set up and ready to use the Protocol API. We'll cover how to get started using one of our API clients and how to make your first API request. We'll also look at where to go next to find all the information you need to take full advantage of our powerful REST API. {{ className: 'lead' }}
+Welcome to Zing Protocol! This guide will get you set up and ready to start monetizing your content as a creator. We'll cover authentication, studio activation, and publishing your first article. {{ className: 'lead' }}
+
+## Prerequisites
+
+Before you begin, you'll need:
+
+- A Google account for authentication
+- A Sui wallet (optional for initial browsing)
+- USDC for purchasing storage tiers and receiving donations
+
+## Step 1: Authenticate with Google
+
+Zing Protocol uses zkLogin for seed-phrase-less Web3 onboarding. Simply click "Continue with Google":
+
+```bash
+# Authentication is handled via Google OAuth
+# No seed phrases or private keys required
+
+# After clicking "Continue with Google":
+# 1. Ephemeral keypair is generated
+# 2. Nonce is created for zkProof
+# 3. Redirect to Google OAuth
+# 4. On return: zkProof generated, Sui address derived
+```
+
+<div className="not-prose">
+  <Button href="/authentication" variant="text" arrow="right">
+    <>Learn more about zkLogin authentication</>
+  </Button>
+</div>
+
+## Step 2: Activate Your Studio
+
+After authentication, you'll be prompted to activate your Studio. This involves:
+
+1. **Choose a Storage Tier** - Select Basic (free), Premium, or Premium+
+2. **Set Your Prices** - Configure subscription prices for each tier
+3. **Complete Purchase** - Pay with USDC balance
+
+```bash
+# Storage tiers available
+Basic    → ~5 GB storage (Free)
+Premium  → ~20 GB storage (Monthly fee)
+Premium+ → ~100 GB storage (Monthly fee)
+```
+
+<div className="not-prose">
+  <Button href="/subscriptions" variant="text" arrow="right">
+    <>Learn more about storage tiers</>
+  </Button>
+</div>
+
+## Step 3: Create Your First Content
+
+Navigate to the content editor to create your first article:
+
+1. **Compose** - Use the TipTap rich text editor
+2. **Configure** - Set access tier (Public, Basic, Premium, Ultra)
+3. **Preview** - Review how your article will appear
+4. **Publish** - Upload to Walrus storage
+
+```bash
+# Access tiers determine who can view your content
+Public   → Anyone can view
+Basic    → Basic subscribers and above
+Premium  → Premium subscribers and above
+Ultra    → Ultra subscribers only
+```
+
+<div className="not-prose">
+  <Button href="/content" variant="text" arrow="right">
+    <>Learn more about content management</>
+  </Button>
+</div>
+
+## Step 4: Set Up Your Profile
+
+Customize your creator profile to attract subscribers:
+
+1. **Upload Avatar** - Your profile picture
+2. **Add Bio** - Tell subscribers who you are
+3. **Set Subscription Prices** - Configure tier pricing
+4. **Add Social Links** - Connect your other platforms
+
+## Understanding the Dashboard
+
+After studio activation, you'll have access to:
+
+| Section      | Purpose                         |
+| ------------ | ------------------------------- |
+| **Home**     | Your content feed and analytics |
+| **Create**   | Content editor (desktop only)   |
+| **Explore**  | Discover other creators         |
+| **Wallet**   | Manage USDC balance             |
+| **Earnings** | View revenue and transactions   |
+| **Referral** | Track referral commissions      |
+
+## What's Next?
+
+Great, you're now set up as a Zing Protocol creator! Here are some next steps:
+
+- [Platform Architecture](/platform-architecture) - Understand the technical stack
+- [Subscriptions](/subscriptions) - Configure your subscription tiers
+- [Donations](/donations) - Enable one-time donations from fans
+- [Wallet](/wallet) - Learn about USDC management
+
+## Troubleshooting
 
 <Note>
-  Before you can make requests to the Protocol API, you will need to grab your
-  API key from your dashboard. You find it under [Settings &raquo; API](#).
+  **Authentication Issues**: If Google auth fails, try clearing cookies and
+  localStorage, then attempt again.
 </Note>
 
-## Choose your client
+<Note>
+  **Storage Limit Exceeded**: If you hit your storage limit, upgrade to a higher
+  tier or delete old content.
+</Note>
 
-Before making your first API request, you need to pick which API client you will use. In addition to good ol' cURL HTTP requests, Protocol offers clients for JavaScript, Python, and PHP. In the following example, you can see how to install each client.
-
-<CodeGroup>
-
-```bash {{ title: 'cURL' }}
-# cURL is most likely already installed on your machine
-curl --version
-```
-
-```bash {{ language: 'js' }}
-# Install the Protocol JavaScript SDK
-npm install @example/protocol-api --save
-```
-
-```bash {{ language: 'python' }}
-# Install the Protocol Python SDK
-pip install protocol_api
-```
-
-```bash {{ language: 'php' }}
-# Install the Protocol PHP SDK
-composer require protocol/sdk
-```
-
-</CodeGroup>
-
-<div className="not-prose">
-  <Button href="/sdks" variant="text" arrow="right">
-    <>Check out our list of first-party SDKs</>
-  </Button>
-</div>
-
-## Making your first API request
-
-After picking your preferred client, you are ready to make your first call to the Protocol API. Below, you can see how to send a GET request to the Conversations endpoint to get a list of all your conversations. In the cURL example, results are limited to ten conversations, the default page length for each client.
-
-<CodeGroup tag="GET" label="/v1/conversations">
-
-```bash {{ title: 'cURL' }}
-curl -G https://api.protocol.chat/v1/conversations \
-  -H "Authorization: Bearer {token}" \
-  -d limit=10
-```
-
-```js
-import ApiClient from '@example/protocol-api'
-
-const client = new ApiClient(token)
-
-await client.conversations.list()
-```
-
-```python
-from protocol_api import ApiClient
-
-client = ApiClient(token)
-
-client.conversations.list()
-```
-
-```php
-$client = new \Protocol\ApiClient($token);
-
-$client->conversations->list();
-```
-
-</CodeGroup>
-
-<div className="not-prose">
-  <Button href="/conversations" variant="text" arrow="right">
-    <>Read the docs for the Conversations endpoint</>
-  </Button>
-</div>
-
-## What's next?
-
-Great, you're now set up with an API client and have made your first request to the API. Here are a few links that might be handy as you venture further into the Protocol API:
-
-- [Grab your API key from the Protocol dashboard](#)
-- [Check out the Conversations endpoint](/conversations)
-- [Learn about the different error messages in Protocol](/errors)
+<Note>
+  **Transaction Failed**: Ensure you have sufficient USDC balance for the
+  transaction fee (~$0.001).
+</Note>

@@ -1,0 +1,389 @@
+export const metadata = {
+  title: 'Content API',
+  description:
+    'Learn how to create, manage, and monetize content on Zing Protocol using the Content API.',
+}
+
+# Content API
+
+The Content API allows creators to publish and manage articles on Zing Protocol. Content is stored on Walrus Protocol (decentralized storage) and encrypted with SEAL Protocol for access control. {{ className: 'lead' }}
+
+## The Article Model
+
+The article model contains all information about published content:
+
+### Properties
+
+<Properties>
+  <Property name="id" type="string">
+    Unique identifier for the article (also the Walrus blob ID).
+  </Property>
+  <Property name="creator_address" type="string">
+    The Sui address of the content creator.
+  </Property>
+  <Property name="title" type="string">
+    The title of the article.
+  </Property>
+  <Property name="preview" type="string">
+    A short preview of the content (first 300 characters).
+  </Property>
+  <Property name="preview_image" type="string">
+    URL to the preview image (optional).
+  </Property>
+  <Property name="access_tier" type="enum">
+    Access level: `public`, `basic`, `premium`, or `ultra`.
+  </Property>
+  <Property name="size_bytes" type="integer">
+    The size of the content in bytes.
+  </Property>
+  <Property name="created_at" type="timestamp">
+    Timestamp of when the article was published.
+  </Property>
+  <Property name="updated_at" type="timestamp">
+    Timestamp of when the article was last updated.
+  </Property>
+  <Property name="likes" type="integer">
+    Number of likes on the article.
+  </Property>
+</Properties>
+
+---
+
+## Create Article {{ tag: 'POST', label: '/v1/articles' }}
+
+<Row>
+  <Col>
+
+    Create a new article. The content is uploaded to Walrus storage and encrypted based on the access tier.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="title" type="string">
+        The title of the article (max 200 characters).
+      </Property>
+      <Property name="content" type="string">
+        The article content in Markdown format.
+      </Property>
+      <Property name="access_tier" type="enum">
+        Access level: `public`, `basic`, `premium`, or `ultra`.
+      </Property>
+    </Properties>
+
+    ### Optional attributes
+
+    <Properties>
+      <Property name="preview_image" type="string">
+        URL to a preview image for the article.
+      </Property>
+      <Property name="epochs" type="integer">
+        Number of epochs to store the content (default: 2).
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/articles">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/articles \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d title="My First Article" \
+      -d content="# Hello World..." \
+      -d access_tier="premium"
+    ```
+
+    ```js
+    const article = await client.articles.create({
+      title: 'My First Article',
+      content: '# Hello World...',
+      accessTier: 'premium',
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "id": "walrus_blob_abc123...",
+      "creator_address": "0x7a8d9c0b...",
+      "title": "My First Article",
+      "preview": "# Hello World...",
+      "access_tier": "premium",
+      "size_bytes": 4096,
+      "created_at": 1709312400,
+      "likes": 0
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## List Articles {{ tag: 'GET', label: '/v1/articles' }}
+
+<Row>
+  <Col>
+
+    Retrieve a paginated list of articles. Supports filtering by creator and access tier.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="creator" type="string">
+        Filter by creator Sui address.
+      </Property>
+      <Property name="tier" type="enum">
+        Filter by access tier: `public`, `basic`, `premium`, `ultra`.
+      </Property>
+      <Property name="limit" type="integer">
+        Number of articles to return (default: 10, max: 100).
+      </Property>
+      <Property name="cursor" type="string">
+        Pagination cursor for next page.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/articles">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/articles \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d limit=10
+    ```
+
+    ```js
+    const { data, hasMore, nextCursor } = await client.articles.list({
+      limit: 10,
+    });
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "has_more": true,
+      "data": [
+        {
+          "id": "walrus_blob_abc123...",
+          "creator_address": "0x7a8d9c0b...",
+          "title": "My First Article",
+          "preview": "# Hello World...",
+          "access_tier": "premium",
+          "size_bytes": 4096,
+          "created_at": 1709312400,
+          "likes": 42
+        }
+      ],
+      "next_cursor": "article_cursor_xyz"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Article {{ tag: 'GET', label: '/v1/articles/:id' }}
+
+<Row>
+  <Col>
+
+    Retrieve a single article by its ID. Returns the full content if the user has the required access tier.
+
+    ### Path parameters
+
+    <Properties>
+      <Property name="id" type="string">
+        The article ID (Walrus blob ID).
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/articles/walrus_blob_abc123">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://api.zing.protocol/v1/articles/walrus_blob_abc123 \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    const article = await client.articles.get('walrus_blob_abc123');
+    ```
+
+    ```json {{ title: 'Response (Success)' }}
+    {
+      "id": "walrus_blob_abc123",
+      "creator_address": "0x7a8d9c0b...",
+      "title": "My First Article",
+      "content": "# Hello World...",
+      "preview": "# Hello World...",
+      "preview_image": null,
+      "access_tier": "premium",
+      "size_bytes": 4096,
+      "created_at": 1709312400,
+      "updated_at": 1709312400,
+      "likes": 42
+    }
+    ```
+
+    ```json {{ title: 'Response (Locked)' }}
+    {
+      "id": "walrus_blob_abc123",
+      "creator_address": "0x7a8d9c0b...",
+      "title": "My Premium Article",
+      "content": null,
+      "preview": "This is a premium article...",
+      "access_tier": "premium",
+      "size_bytes": 8192,
+      "created_at": 1709312400,
+      "locked": true,
+      "message": "Subscribe to this creator to access full content"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Update Article {{ tag: 'PUT', label: '/v1/articles/:id' }}
+
+<Row>
+  <Col>
+
+    Update an article's metadata. Only the creator can update their articles.
+
+    ### Optional attributes
+
+    <Properties>
+      <Property name="title" type="string">
+        New title for the article.
+      </Property>
+      <Property name="access_tier" type="enum">
+        New access tier: `public`, `basic`, `premium`, or `ultra`.
+      </Property>
+      <Property name="preview_image" type="string">
+        New preview image URL.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="PUT" label="/v1/articles/walrus_blob_abc123">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X PUT https://api.zing.protocol/v1/articles/walrus_blob_abc123 \
+      -H "Authorization: Bearer {jwt_token}" \
+      -d title="Updated Title" \
+      -d access_tier="ultra"
+    ```
+
+    ```js
+    const updated = await client.articles.update('walrus_blob_abc123', {
+      title: 'Updated Title',
+      accessTier: 'ultra',
+    });
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Delete Article {{ tag: 'DELETE', label: '/v1/articles/:id' }}
+
+<Row>
+  <Col>
+
+    Delete an article. Only the creator can delete their articles. This removes the content from Walrus storage.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/v1/articles/walrus_blob_abc123">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://api.zing.protocol/v1/articles/walrus_blob_abc123 \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    await client.articles.delete('walrus_blob_abc123');
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Like Article {{ tag: 'POST', label: '/v1/articles/:id/like' }}
+
+<Row>
+  <Col>
+
+    Like an article. Users can like articles from creators they support.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/articles/walrus_blob_abc123/like">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://api.zing.protocol/v1/articles/walrus_blob_abc123/like \
+      -H "Authorization: Bearer {jwt_token}"
+    ```
+
+    ```js
+    await client.articles.like('walrus_blob_abc123');
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Access Tiers
+
+| Tier        | Description                   | Who Can View           |
+| ----------- | ----------------------------- | ---------------------- |
+| **public**  | Anyone can view               | All users              |
+| **basic**   | Requires Basic subscription   | Basic+ subscribers     |
+| **premium** | Requires Premium subscription | Premium+ subscribers   |
+| **ultra**   | Requires Ultra subscription   | Ultra subscribers only |
+
+## Storage Cost
+
+Content storage on Walrus has an associated cost:
+
+```typescript
+// Storage cost calculation
+const { encodedSize, writeCost } = storageCost(
+  walrusSystemState,
+  contentSizeBytes,
+  epochs, // Default 2
+)
+
+// Cost is deducted from Creator Energy (storage balance)
+```
+
+<Note>
+  **Creator Energy**: Storage is managed through Creator Energy credits. Basic
+  tier provides ~5GB free, with paid tiers offering more storage.
+</Note>
