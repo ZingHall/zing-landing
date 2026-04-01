@@ -6,10 +6,10 @@ const variantStyles = {
 }
 
 const colorStyles = {
-  emerald: {
-    small: 'text-emerald-500 dark:text-emerald-400',
+  primary: {
+    small: 'text-primary dark:text-primary/80',
     medium:
-      'ring-emerald-300 dark:ring-emerald-400/30 bg-emerald-400/10 text-emerald-500 dark:text-emerald-400',
+      'ring-primary/30 dark:ring-primary/30 bg-primary/10 text-primary dark:text-primary/80',
   },
   sky: {
     small: 'text-sky-500',
@@ -34,7 +34,7 @@ const colorStyles = {
 }
 
 const valueColorMap = {
-  GET: 'emerald',
+  GET: 'primary',
   POST: 'sky',
   PUT: 'amber',
   DELETE: 'rose',
@@ -43,7 +43,7 @@ const valueColorMap = {
 export function Tag({
   children,
   variant = 'medium',
-  color = valueColorMap[children] ?? 'emerald',
+  color = valueColorMap[children] ?? 'primary',
 }: {
   children: keyof typeof valueColorMap & (string | {})
   variant?: keyof typeof variantStyles
