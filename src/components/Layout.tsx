@@ -28,8 +28,13 @@ export function Layout({
         >
           <div className="contents lg:pointer-events-auto lg:block lg:w-72 lg:overflow-y-auto lg:border-r lg:border-zinc-900/10 lg:px-6 lg:pt-4 lg:pb-8 xl:w-80 lg:dark:border-white/10">
             <div className="hidden lg:flex">
-              <Link href="/" aria-label="Home">
-                <Logo className="h-6" />
+              <Link
+                href="/"
+                aria-label="Home"
+                className="flex items-center justify-center gap-2"
+              >
+                <Logo className="h-5 w-5" />
+                <h1 className='font-bold text-lg'>Zing</h1>
               </Link>
             </div>
             <Header />

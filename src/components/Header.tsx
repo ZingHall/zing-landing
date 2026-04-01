@@ -74,8 +74,9 @@ export const Header = forwardRef<
       <Search />
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
-        <CloseButton as={Link} href="/" aria-label="Home">
-          <Logo className="h-6" />
+        <CloseButton as={Link} href="/" aria-label="Home" className="flex items-center justify-center gap-2">
+          <Logo className="h-5 w-5" />
+          <h1 className='font-bold text-lg'>Zing</h1>
         </CloseButton>
       </div>
       <div className="flex items-center gap-5">
@@ -92,7 +93,7 @@ export const Header = forwardRef<
           <ThemeToggle />
         </div>
         <div className="hidden min-[416px]:contents">
-          <Button href="#">Sign in</Button>
+          <Button href="#">App</Button>
         </div>
       </div>
     </motion.div>
