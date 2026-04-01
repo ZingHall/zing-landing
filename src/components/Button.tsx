@@ -1,65 +1,81 @@
-'use client'
-
-import Link from 'next/link'
 import clsx from 'clsx'
-import { useState } from 'react'
+import Link from 'next/link'
+
+function ArrowIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m11.5 6.5 3 3.5m0 0-3 3.5m3-3.5h-9"
+      />
+    </svg>
+  )
+}
+
+const variantStyles = {
+  primary:
+    'rounded-full bg-zinc-900 py-1 px-3 text-white hover:bg-zinc-700 dark:bg-emerald-400/10 dark:text-emerald-400 dark:ring-1 dark:ring-inset dark:ring-emerald-400/20 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-300 dark:hover:ring-emerald-300',
+  secondary:
+    'rounded-full bg-zinc-100 py-1 px-3 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800/40 dark:text-zinc-400 dark:ring-1 dark:ring-inset dark:ring-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-300',
+  filled:
+    'rounded-full bg-zinc-900 py-1 px-3 text-white hover:bg-zinc-700 dark:bg-emerald-500 dark:text-white dark:hover:bg-emerald-400',
+  outline:
+    'rounded-full py-1 px-3 text-zinc-700 ring-1 ring-inset ring-zinc-900/10 hover:bg-zinc-900/2.5 hover:text-zinc-900 dark:text-zinc-400 dark:ring-white/10 dark:hover:bg-white/5 dark:hover:text-white',
+  text: 'text-emerald-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-500',
+}
 
 type ButtonProps = {
-  invert?: boolean
-  variant?: 'default' | 'zing'
+  variant?: keyof typeof variantStyles
+  arrow?: 'left' | 'right'
 } & (
   | React.ComponentPropsWithoutRef<typeof Link>
   | (React.ComponentPropsWithoutRef<'button'> & { href?: undefined })
 )
 
 export function Button({
-  invert = false,
-  variant = 'default',
+  variant = 'primary',
   className,
   children,
+  arrow,
   ...props
 }: ButtonProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const zingOrange = '#FF4D13'
-  const zingOrangeHover = '#E6440F'
-
   className = clsx(
+    'inline-flex gap-0.5 justify-center overflow-hidden text-sm font-medium transition',
+    variantStyles[variant],
     className,
-    'inline-flex rounded-full px-4 py-1.5 text-sm font-semibold transition',
-    variant === 'zing'
-      ? 'text-white hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500/20'
-      : invert
-        ? 'bg-white text-neutral-950 hover:bg-neutral-200'
-        : 'bg-neutral-950 text-white hover:bg-neutral-800',
   )
 
-  const style =
-    variant === 'zing'
-      ? { backgroundColor: isHovered ? zingOrangeHover : zingOrange }
-      : {}
+  let arrowIcon = (
+    <ArrowIcon
+      className={clsx(
+        'mt-0.5 h-5 w-5',
+        variant === 'text' && 'relative top-px',
+        arrow === 'left' && '-ml-1 rotate-180',
+        arrow === 'right' && '-mr-1',
+      )}
+    />
+  )
 
-  const hoverHandlers =
-    variant === 'zing'
-      ? {
-          onMouseEnter: () => setIsHovered(true),
-          onMouseLeave: () => setIsHovered(false),
-          onFocus: () => setIsHovered(true),
-          onBlur: () => setIsHovered(false),
-        }
-      : {}
-
-  let inner = <span className="relative top-px">{children}</span>
+  let inner = (
+    <>
+      {arrow === 'left' && arrowIcon}
+      {children}
+      {arrow === 'right' && arrowIcon}
+    </>
+  )
 
   if (typeof props.href === 'undefined') {
     return (
-      <button className={className} style={style} {...hoverHandlers} {...props}>
+      <button className={className} {...props}>
         {inner}
       </button>
     )
   }
 
   return (
-    <Link className={className} style={style} {...hoverHandlers} {...props}>
+    <Link className={className} {...props}>
       {inner}
     </Link>
   )
