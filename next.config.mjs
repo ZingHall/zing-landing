@@ -19,6 +19,8 @@ const nextConfig = {
   outputFileTracingIncludes: {
     '/**/*': ['./src/app/**/*.mdx'],
   },
+  output: 'export',
+  distDir: 'dist',
 }
 
 export default withSearch(withMDX(nextConfig))
