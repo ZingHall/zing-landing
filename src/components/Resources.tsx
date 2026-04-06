@@ -42,9 +42,9 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/subscriptions',
-    name: 'Subscriptions',
-    description: 'Set up tiered subscriptions for exclusive content access.',
+    href: '/memberships',
+    name: 'Memberships',
+    description: 'Set up tiered memberships for exclusive content access.',
     icon: UsersIcon,
     pattern: {
       y: -6,

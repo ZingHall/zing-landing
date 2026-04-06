@@ -6,7 +6,7 @@ export const metadata = {
 
 # Platform Architecture
 
-Zing Protocol is a creator monetization platform built on the Sui blockchain that enables creators to own their content, monetize through subscriptions and donations, and leverage decentralized storage. This page dives into the technical architecture that makes this possible. {{ className: 'lead' }}
+Zing Protocol is a creator monetization platform built on the Sui blockchain that enables creators to own their content, monetize through memberships and donations, and leverage decentralized storage. This page dives into the technical architecture that makes this possible. {{ className: 'lead' }}
 
 ## System Overview
 
@@ -30,8 +30,8 @@ The Zing Protocol platform consists of several integrated layers:
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Sui Blockchain Layer                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
-│  │   zkLogin   │  │ Subscriptions│  │     Wallet (USDC)       │ │
-│  │   (Auth)    │  │   & Donations│  │   Balance & Transfers   │ │
+│  │   zkLogin   │  │ Memberships  │  │     Wallet (USDC)       │ │
+│  │   (Auth)    │  │ & Donations │  │   Balance & Transfers   │ │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -78,14 +78,14 @@ const { encodedSize, writeCost } = storageCost(
 
 ### SEAL Protocol Encryption
 
-Content access is controlled via SEAL Protocol encryption. Subscribers receive decryption keys based on their subscription tier.
+Content access is controlled via SEAL Protocol encryption. Members receive decryption keys based on their membership tier.
 
 ```typescript
 // Access tiers
 Public    → No encryption (anyone can read)
-Basic     → Basic subscribers only
-Premium   → Premium subscribers only
-Ultra     → Ultra subscribers only
+Basic     → Basic members only
+Premium   → Premium members only
+Ultra     → Ultra members only
 ```
 
 ### Knowledge Graph Extraction
@@ -121,7 +121,7 @@ https://api.zing.protocol/v1
 # Key endpoints
 GET  /articles          # List articles
 POST /articles          # Create article
-GET  /subscriptions    # List subscriptions
+GET  /memberships       # List memberships
 POST /subscribe         # Subscribe to creator
 POST /donate            # Donate to creator
 GET  /wallet/balance    # Get USDC balance
@@ -138,17 +138,17 @@ Calculate Storage Cost (Walrus) → Encrypt with SEAL
     ↓
 Publish Transaction (Sui) → Upload to Walrus → Get Blob ID
     ↓
-Content Available → Subscribers can access based on tier
+Content Available → Members can access based on tier
 ```
 
-## Data Flow: Subscription
+## Data Flow: Membership
 
 ```
-Subscriber → Browse Creator → View Locked Content
+Member → Browse Creator → View Locked Content
     ↓
 Click Subscribe → Select Tier → Sign Transaction
     ↓
-Payment (USDC) → Update Subscription Status (Sui)
+Payment (USDC) → Update Membership Status (Sui)
     ↓
 Grant Access → Decryption Key Provided → Content Accessible
 ```
@@ -177,4 +177,4 @@ Grant Access → Decryption Key Provided → Content Accessible
 - [Authentication](/authentication) - Learn how zkLogin works
 - [Quickstart](/quickstart) - Get started with creator onboarding
 - [Content API](/content) - Learn about content management
-- [Subscriptions](/subscriptions) - Understand the subscription system
+- [Memberships](/memberships) - Understand the membership system

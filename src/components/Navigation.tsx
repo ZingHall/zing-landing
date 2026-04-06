@@ -246,7 +246,7 @@ export const navigation: Array<NavGroup> = [
     title: 'Creator Features',
     links: [
       { title: 'Content API', href: '/content' },
-      { title: 'Subscriptions', href: '/subscriptions' },
+      { title: 'Memberships', href: '/memberships' },
       { title: 'Donations', href: '/donations' },
       { title: 'Wallet', href: '/wallet' },
     ],

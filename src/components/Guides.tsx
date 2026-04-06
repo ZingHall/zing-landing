@@ -20,7 +20,7 @@ const guides = [
   {
     href: '/wallet',
     name: 'Wallet & Payments',
-    description: 'Manage USDC for subscriptions and donations.',
+    description: 'Manage USDC for memberships and donations.',
   },
 ]
 

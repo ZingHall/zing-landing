@@ -1,3 +1,6 @@
+import Image from 'next/image'
+import loginPageImage from '@/images/login-page.webp'
+
 export const metadata = {
   title: 'Quickstart',
   description:
@@ -13,24 +16,21 @@ Welcome to Zing Protocol! This guide will get you set up and ready to start mone
 Before you begin, you'll need:
 
 - A Google account for authentication
-- A Sui wallet (optional for initial browsing)
-- USDC for purchasing storage tiers and receiving donations
+- A Sui wallet (optional for topup usage, more topup options coming soon)
+- USDC for purchasing storage tiers other than free plan
 
 ## Step 1: Authenticate with Google
 
 Zing Protocol uses zkLogin for seed-phrase-less Web3 onboarding. Simply click "Continue with Google":
 
-```bash
-# Authentication is handled via Google OAuth
-# No seed phrases or private keys required
-
-# After clicking "Continue with Google":
-# 1. Ephemeral keypair is generated
-# 2. Nonce is created for zkProof
-# 3. Redirect to Google OAuth
-# 4. On return: zkProof generated, Sui address derived
-```
-
+<div className="not-prose mt-8">
+  <Image
+    src={loginPageImage}
+    alt="Zing Protocol login page"
+    className="rounded-lg border border-zinc-200 dark:border-white/10"
+    placeholder="blur"
+  />
+</div>
 <div className="not-prose">
   <Button href="/authentication" variant="text" arrow="right">
     <>Learn more about zkLogin authentication</>
@@ -42,7 +42,7 @@ Zing Protocol uses zkLogin for seed-phrase-less Web3 onboarding. Simply click "C
 After authentication, you'll be prompted to activate your Studio. This involves:
 
 1. **Choose a Storage Tier** - Select Basic (free), Premium, or Premium+
-2. **Set Your Prices** - Configure subscription prices for each tier
+2. **Set Your Prices** - Configure membership prices for each tier
 3. **Complete Purchase** - Pay with USDC balance
 
 ```bash
@@ -53,9 +53,18 @@ Premium+ → ~100 GB storage (Monthly fee)
 ```
 
 <div className="not-prose">
-  <Button href="/subscriptions" variant="text" arrow="right">
-    <>Learn more about storage tiers</>
+  <Button href="/memberships" variant="text" arrow="right">
+    <>Learn more about membership tiers</>
   </Button>
+</div>
+
+<div className="not-prose my-8">
+  <Image
+    src={loginPageImage}
+    alt="Zing Protocol studio activation"
+    className="rounded-lg border border-zinc-200 dark:border-white/10"
+    placeholder="blur"
+  />
 </div>
 
 ## Step 3: Create Your First Content
@@ -70,9 +79,9 @@ Navigate to the content editor to create your first article:
 ```bash
 # Access tiers determine who can view your content
 Public   → Anyone can view
-Basic    → Basic subscribers and above
-Premium  → Premium subscribers and above
-Ultra    → Ultra subscribers only
+Basic    → Basic members and above
+Premium  → Premium members and above
+Ultra    → Ultra members only
 ```
 
 <div className="not-prose">
@@ -81,14 +90,32 @@ Ultra    → Ultra subscribers only
   </Button>
 </div>
 
+<div className="not-prose my-8">
+  <Image
+    src={loginPageImage}
+    alt="Zing Protocol content editor"
+    className="rounded-lg border border-zinc-200 dark:border-white/10"
+    placeholder="blur"
+  />
+</div>
+
 ## Step 4: Set Up Your Profile
 
-Customize your creator profile to attract subscribers:
+Customize your creator profile to attract members:
 
 1. **Upload Avatar** - Your profile picture
-2. **Add Bio** - Tell subscribers who you are
-3. **Set Subscription Prices** - Configure tier pricing
+2. **Add Bio** - Tell members who you are
+3. **Set Membership Prices** - Configure tier pricing
 4. **Add Social Links** - Connect your other platforms
+
+<div className="not-prose my-8">
+  <Image
+    src={loginPageImage}
+    alt="Zing Protocol profile setup"
+    className="rounded-lg border border-zinc-200 dark:border-white/10"
+    placeholder="blur"
+  />
+</div>
 
 ## Understanding the Dashboard
 
@@ -108,7 +135,7 @@ After studio activation, you'll have access to:
 Great, you're now set up as a Zing Protocol creator! Here are some next steps:
 
 - [Platform Architecture](/platform-architecture) - Understand the technical stack
-- [Subscriptions](/subscriptions) - Configure your subscription tiers
+- [Memberships](/memberships) - Configure your membership tiers
 - [Donations](/donations) - Enable one-time donations from fans
 - [Wallet](/wallet) - Learn about USDC management
 

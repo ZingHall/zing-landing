@@ -5,7 +5,7 @@ import { HeroPattern } from '@/components/HeroPattern'
 export const metadata = {
   title: 'Zing Protocol',
   description:
-    'Decentralized Knowledge Marketplace. Creator monetization platform on Sui blockchain with Pay-Per-Query API for AI agents.',
+    'Creator ownership protocol for the open web. Built on Sui blockchain with Walrus decentralized storage. Your content, your audience, your revenue.',
 }
 
 export const sections = [
@@ -17,7 +17,19 @@ export const sections = [
 
 # Zing Protocol
 
-Decentralized Knowledge Marketplace for the AI era. Turn your static content into **Liquid Knowledge** — earn royalties not just from readers, but from AI agents and researchers querying your data. {{ className: 'lead' }}
+The internet gave creators a megaphone. Platforms gave them an audience. But somewhere along the way, the deal turned extractive.
+
+Google built a search empire on the back of independent publishers — then trained AI on their writing and stopped sending them traffic. YouTube takes 45% of ad revenue. Instagram owns your follower list behind API. TikTok decides who sees your work based on what keeps people scrolling, not what you created.
+
+**This isn't a bug. It's the business model.**
+
+Zing is building something different: a creator economy where the platform is infrastructure, not a landlord. In the Zing model, the creator owns three things that Web2 platforms have always kept for themselves: the content itself (stored permanently on Walrus, immovable and uncensorable), the audience relationship (member data is on-chain, portable, not locked in any platform), and the revenue stream (fans pay in USDC directly, no intermediary taking 30% and exchange friction).
+
+The three shifts Zing makes:
+
+- **From rented to owned** — Your content is a on-chain asset. It exists whether Zing exists or not.
+- **From algorithmic to direct** — Your fans subscribe directly. There is no algorithm between a creator and their revenue.
+- **From extractive to sovereign** — Your content is not a locked asset. Download it anytime, build visualizations, or publish to third-party platforms. Your data, your rules.
 
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="/quickstart" arrow="right">
@@ -30,11 +42,11 @@ Decentralized Knowledge Marketplace for the AI era. Turn your static content int
 
 ## For Creators {{ anchor: false }}
 
-Monetize your content through multiple revenue streams. Subscriptions, donations, and new **Pay-Per-Query** royalties from AI agents. Built on Sui blockchain with decentralized storage. {{ className: 'lead' }}
+Monetize your content through multiple revenue streams. Subscriptions, donations, and new **Pay-Per-Query** royalties from AI agents. Built on Sui blockchain with Walrus decentralized storage. {{ className: 'lead' }}
 
 <div className="not-prose">
-  <Button href="/subscriptions" variant="text" arrow="right">
-    <>Subscription Tiers</>
+  <Button href="/memberships" variant="text" arrow="right">
+    <>Membership Tiers</>
   </Button>
 </div>
 
@@ -42,7 +54,7 @@ Monetize your content through multiple revenue streams. Subscriptions, donations
 
 ## Platform Features {{ anchor: false }}
 
-Access APIs for content management, subscriptions, donations, and the Knowledge Graph. All powered by Walrus Protocol storage and SEAL Protocol encryption. {{ className: 'lead' }}
+Access APIs for content management, memberships, donations, and the Knowledge Graph. All powered by Walrus Protocol storage and SEAL Protocol encryption. {{ className: 'lead' }}
 
 <Resources />
 
@@ -97,7 +109,7 @@ Unlock new revenue streams with AI-powered features. Knowledge Graphs, Pay-Per-Q
 | **Blockchain** | Sui                                |
 | **Storage**    | Walrus Protocol                    |
 | **Encryption** | SEAL Protocol                      |
-| **Auth**       | zkLogin (Google OAuth)             |
+| **Auth**       | zkLogin (OpenID OAuth)             |
 | **Knowledge**  | Knowledge Graphs (Neo4j/SurrealDB) |
 
 <div className="not-prose">

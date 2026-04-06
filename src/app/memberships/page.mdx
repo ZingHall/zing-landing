@@ -1,16 +1,16 @@
 export const metadata = {
-  title: 'Subscriptions',
+  title: 'Memberships',
   description:
-    'Learn how the subscription system works on Zing Protocol, including tier management and subscription transactions.',
+    'Learn how the membership system works on Zing Protocol, including tier management and membership transactions.',
 }
 
-# Subscriptions
+# Memberships
 
-Zing Protocol's subscription system allows creators to monetize their content through tiered access. Subscribers pay USDC to access premium content from their favorite creators. {{ className: 'lead' }}
+Zing Protocol's membership system allows creators to monetize their content through tiered access. Members pay USDC to access premium content from their favorite creators. {{ className: 'lead' }}
 
-## Subscription Tiers
+## Membership Tiers
 
-Creators can configure up to 3 subscription tiers:
+Creators can configure up to 3 membership tiers:
 
 | Tier        | Storage | Typical Price    | Purpose           |
 | ----------- | ------- | ---------------- | ----------------- |
@@ -18,31 +18,31 @@ Creators can configure up to 3 subscription tiers:
 | **Premium** | ~20 GB  | $5-20/mo         | Active fans       |
 | **Ultra**   | ~100 GB | $20-100/mo       | Super fans        |
 
-## The Subscription Model
+## The Membership Model
 
 ### Properties
 
 <Properties>
   <Property name="id" type="string">
-    Unique identifier for the subscription.
+    Unique identifier for the membership.
   </Property>
-  <Property name="subscriber" type="string">
-    Sui address of the subscriber.
+  <Property name="member" type="string">
+    Sui address of the member.
   </Property>
   <Property name="creator" type="string">
     Sui address of the content creator.
   </Property>
   <Property name="tier" type="enum">
-    Subscription tier: `basic`, `premium`, or `ultra`.
+    Membership tier: `basic`, `premium`, or `ultra`.
   </Property>
   <Property name="price" type="string">
-    Subscription price in USDC (e.g., "5.00").
+    Membership price in USDC (e.g., "5.00").
   </Property>
   <Property name="created_at" type="timestamp">
-    Timestamp when subscription started.
+    Timestamp when membership started.
   </Property>
   <Property name="expired_at" type="timestamp">
-    Timestamp when subscription expires.
+    Timestamp when membership expires.
   </Property>
   <Property name="status" type="enum">
     Status: `active`, `expired`, or `cancelled`.
@@ -56,7 +56,7 @@ Creators can configure up to 3 subscription tiers:
 <Row>
   <Col>
 
-    Subscribe to a creator at a specific tier. This creates a recurring subscription.
+    Subscribe to a creator at a specific tier. This creates a recurring membership.
 
     ### Required attributes
 
@@ -65,7 +65,7 @@ Creators can configure up to 3 subscription tiers:
         The Sui address of the creator to subscribe to.
       </Property>
       <Property name="tier" type="enum">
-        Subscription tier: `basic`, `premium`, or `ultra`.
+        Membership tier: `basic`, `premium`, or `ultra`.
       </Property>
     </Properties>
 
@@ -86,7 +86,7 @@ Creators can configure up to 3 subscription tiers:
     ```
 
     ```js
-    const subscription = await client.subscriptions.subscribe({
+    const membership = await client.memberships.subscribe({
       creator: '0x123...creator',
       tier: 'premium',
     });
@@ -95,7 +95,7 @@ Creators can configure up to 3 subscription tiers:
     ```json {{ title: 'Response' }}
     {
       "id": "sub_abc123",
-      "subscriber": "0x456...subscriber",
+      "member": "0x456...member",
       "creator": "0x123...creator",
       "tier": "premium",
       "price": "10.00",
@@ -112,12 +112,12 @@ Creators can configure up to 3 subscription tiers:
 
 ---
 
-## List My Subscriptions {{ tag: 'GET', label: '/v1/subscriptions' }}
+## List My Memberships {{ tag: 'GET', label: '/v1/memberships' }}
 
 <Row>
   <Col>
 
-    Get all subscriptions for the authenticated user (as subscriber).
+    Get all memberships for the authenticated user (as member).
 
     ### Query parameters
 
@@ -133,16 +133,16 @@ Creators can configure up to 3 subscription tiers:
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/subscriptions">
+    <CodeGroup title="Request" tag="GET" label="/v1/memberships">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/subscriptions \
+    curl https://api.zing.protocol/v1/memberships \
       -H "Authorization: Bearer {jwt_token}" \
       -d status="active"
     ```
 
     ```js
-    const subscriptions = await client.subscriptions.list({
+    const memberships = await client.memberships.list({
       status: 'active',
     });
     ```
@@ -170,12 +170,12 @@ Creators can configure up to 3 subscription tiers:
 
 ---
 
-## List Creator's Subscribers {{ tag: 'GET', label: '/v1/creators/:address/subscribers' }}
+## List Creator's Members {{ tag: 'GET', label: '/v1/creators/:address/members' }}
 
 <Row>
   <Col>
 
-    Get all subscribers for a creator (creator only).
+    Get all members for a creator (creator only).
 
     ### Path parameters
 
@@ -196,15 +196,15 @@ Creators can configure up to 3 subscription tiers:
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/creators/0x123.../subscribers">
+    <CodeGroup title="Request" tag="GET" label="/v1/creators/0x123.../members">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/creators/0x123.../subscribers \
+    curl https://api.zing.protocol/v1/creators/0x123.../members \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
     ```js
-    const subscribers = await client.creators.subscribers('0x123...');
+    const members = await client.creators.members('0x123...');
     ```
 
     ```json {{ title: 'Response' }}
@@ -212,7 +212,7 @@ Creators can configure up to 3 subscription tiers:
       "data": [
         {
           "id": "sub_abc123",
-          "subscriber": "0x456...subscriber",
+          "member": "0x456...member",
           "tier": "premium",
           "price": "10.00",
           "created_at": 1709312400,
@@ -236,25 +236,25 @@ Creators can configure up to 3 subscription tiers:
 
 ---
 
-## Cancel Subscription {{ tag: 'DELETE', label: '/v1/subscriptions/:id' }}
+## Cancel Membership {{ tag: 'DELETE', label: '/v1/memberships/:id' }}
 
 <Row>
   <Col>
 
-    Cancel a subscription. The subscription remains active until the expiration date.
+    Cancel a membership. The membership remains active until the expiration date.
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="DELETE" label="/v1/subscriptions/sub_abc123">
+    <CodeGroup title="Request" tag="DELETE" label="/v1/memberships/sub_abc123">
 
     ```bash {{ title: 'cURL' }}
-    curl -X DELETE https://api.zing.protocol/v1/subscriptions/sub_abc123 \
+    curl -X DELETE https://api.zing.protocol/v1/memberships/sub_abc123 \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
     ```js
-    await client.subscriptions.cancel('sub_abc123');
+    await client.memberships.cancel('sub_abc123');
     ```
 
     </CodeGroup>
@@ -264,7 +264,7 @@ Creators can configure up to 3 subscription tiers:
 
 ---
 
-## Subscription Flow
+## Membership Flow
 
 ```
 User views locked content
@@ -273,20 +273,20 @@ Content shows paywall with tier badge
          ↓
 User clicks "Subscribe" button
          ↓
-Subscription dialog shows available tiers
+Membership dialog shows available tiers
          ↓
 User selects tier and confirms
          ↓
 Transaction: USDC deducted from wallet
          ↓
-Subscription created on Sui blockchain
+Membership created on Sui blockchain
          ↓
 Access granted to content
          ↓
 User can view full content
 ```
 
-## Subscription Pricing
+## Membership Pricing
 
 Creators set their own prices for each tier:
 
@@ -310,18 +310,18 @@ const pricing = {
 
 ## Revenue Model
 
-| Stream            | Fee Structure                |
-| ----------------- | ---------------------------- |
-| **Subscriptions** | 95% Creator / 5% Platform    |
-| **Donations**     | 95% Creator / 5% Platform    |
-| **Referrals**     | 5-10% commission to referrer |
+| Stream          | Fee Structure                |
+| --------------- | ---------------------------- |
+| **Memberships** | 95% Creator / 5% Platform    |
+| **Donations**   | 95% Creator / 5% Platform    |
+| **Referrals**   | 5-10% commission to referrer |
 
 <Note>
   **Platform Fee**: Zing Protocol takes a 5% platform fee on all transactions to
   support platform development.
 </Note>
 
-## Checking Subscription Access
+## Checking Membership Access
 
 ```typescript
 // Check if user has access to content

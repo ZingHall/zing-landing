@@ -6,7 +6,7 @@ export const metadata = {
 
 # Wallet
 
-The Zing Protocol wallet manages your USDC balance for all platform transactions including subscriptions, donations, and storage purchases. {{ className: 'lead' }}
+The Zing Protocol wallet manages your USDC balance for all platform transactions including memberships, donations, and storage purchases. {{ className: 'lead' }}
 
 ## The Wallet Model
 
@@ -201,7 +201,7 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
 
     <Properties>
       <Property name="type" type="enum">
-        Filter by type: `topup`, `payout`, `subscription`, `donation`, `storage`.
+        Filter by type: `topup`, `payout`, `membership`, `donation`, `storage`.
       </Property>
       <Property name="limit" type="integer">
         Number of results (default: 10).
@@ -233,7 +233,7 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
       "data": [
         {
           "id": "tx_abc123",
-          "type": "subscription",
+          "type": "membership",
           "amount": "-10.00",
           "description": "Subscribe to @creator",
           "created_at": 1709312400,
@@ -325,7 +325,7 @@ Confirmation shown with tx hash
 | -------------------- | --------------------- |
 | **Top Up**           | ~0.001 USDC (Sui gas) |
 | **Payout**           | 0.001 USDC            |
-| **Subscription**     | 0.001 USDC            |
+| **Membership**       | 0.001 USDC            |
 | **Donation**         | 0.001 USDC            |
 | **Storage Purchase** | 0.001 USDC            |
 
@@ -359,6 +359,6 @@ Confirmation shown with tx hash
 
 ## Next Steps
 
-- [Subscriptions](/subscriptions) - Subscribe to creators
+- [Memberships](/memberships) - Subscribe to creators
 - [Donations](/donations) - Support your favorite creators
 - [Earnings](/earnings) - View your complete financial dashboard
