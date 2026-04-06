@@ -142,9 +142,17 @@ function CodePanel({
   label?: string
   code?: string
 }) {
-  let child = Children.only(children)
+  // Filter to get valid React elements, filtering out null, undefined, strings, numbers, etc.
+  // This handles edge cases where MDX passes whitespace or multiple children
+  const validChildren = Children.toArray(children).filter(
+    (child): child is React.ReactElement =>
+      isValidElement(child) && typeof child !== 'string',
+  )
 
-  if (isValidElement(child)) {
+  // Use the first valid child, or handle gracefully if none
+  let child = validChildren[0]
+
+  if (child) {
     const props = child.props as { tag?: string; label?: string; code?: string }
     tag = props.tag ?? tag
     label = props.label ?? label
