@@ -1,5 +1,10 @@
 import Image from 'next/image'
 import loginPageImage from '@/images/login-page.webp'
+import StudioPageImage from '@/images/studio-page.webp'
+import publishPage02Image from '@/images/publish-page-02.webp'
+import publishPage03Image from '@/images/publish-page-03.webp'
+import publishPage04Image from '@/images/publish-page-04.webp'
+import profilePageImage from '@/images/profile-page.webp'
 
 export const metadata = {
   title: 'Quickstart',
@@ -23,7 +28,7 @@ Before you begin, you'll need:
 
 Zing Protocol uses zkLogin for seed-phrase-less Web3 onboarding. Simply click "Continue with Google":
 
-<div className="not-prose mt-8">
+<div className="not-prose mt-8 mb-2">
   <Image
     src={loginPageImage}
     alt="Zing Protocol login page"
@@ -39,28 +44,43 @@ Zing Protocol uses zkLogin for seed-phrase-less Web3 onboarding. Simply click "C
 
 ## Step 2: Activate Your Studio
 
-After authentication, you'll be prompted to activate your Studio. This involves:
+After authentication, you'll be prompted to activate your Studio by purchasing Dev Energy credits. Dev Energy is the storage quota you purchase — your content costs credits based on its size, ensuring quality over quantity.
 
-1. **Choose a Storage Tier** - Select Basic (free), Premium, or Premium+
-2. **Set Your Prices** - Configure membership prices for each tier
-3. **Complete Purchase** - Pay with USDC balance
+### Dev Energy Calculation
 
-```bash
-# Storage tiers available
-Basic    → ~5 GB storage (Free)
-Premium  → ~20 GB storage (Monthly fee)
-Premium+ → ~100 GB storage (Monthly fee)
+Each piece of content costs Dev Energy credits based on its size:
+
+| Action       | Dev Energy Cost                      |
+| ------------ | ------------------------------------ |
+| 1 credit     | ~63 MB of storage                    |
+| Minimum cost | 1 credit (even for small text posts) |
+
+```typescript
+// Example: Content storage cost
+const WALRUS_BLOB_BASE_UNIT_BYTES = 66028830.72 // ~63 MB per credit
+
+const creditsCost = contentSizeBytes / WALRUS_BLOB_BASE_UNIT_BYTES
 ```
+
+This design ensures quality content — a simple text post still costs 1 credit, encouraging creators to publish meaningful work.
+
+### Storage Tiers
+
+| Tier     | Dev Energy  | Storage |
+| -------- | ----------- | ------- |
+| Basic    | 10 credits  | ~5 GB   |
+| Premium  | 30 credits  | ~20 GB  |
+| Premium+ | 120 credits | ~100 GB |
 
 <div className="not-prose">
   <Button href="/memberships" variant="text" arrow="right">
-    <>Learn more about membership tiers</>
+    <>Learn more about Dev Energy tiers</>
   </Button>
 </div>
 
 <div className="not-prose my-8">
   <Image
-    src={loginPageImage}
+    src={StudioPageImage}
     alt="Zing Protocol studio activation"
     className="rounded-lg border border-zinc-200 dark:border-white/10"
     placeholder="blur"
@@ -71,7 +91,7 @@ Premium+ → ~100 GB storage (Monthly fee)
 
 Navigate to the content editor to create your first article:
 
-1. **Compose** - Use the TipTap rich text editor
+1. **Create** - Compose your content in article or post. More formats support in the future.
 2. **Configure** - Set access tier (Public, Basic, Premium, Ultra)
 3. **Preview** - Review how your article will appear
 4. **Publish** - Upload to Walrus storage
@@ -90,12 +110,21 @@ Ultra    → Ultra members only
   </Button>
 </div>
 
-<div className="not-prose my-8">
+<div className="not-prose my-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
   <Image
-    src={loginPageImage}
-    alt="Zing Protocol content editor"
-    className="rounded-lg border border-zinc-200 dark:border-white/10"
-    placeholder="blur"
+    src={publishPage02Image}
+    alt="Zing Protocol content editor - compose"
+    className="h-64 w-full rounded-lg border border-zinc-200 object-cover dark:border-white/10"
+  />
+  <Image
+    src={publishPage03Image}
+    alt="Zing Protocol content editor - configure"
+    className="h-64 w-full rounded-lg border border-zinc-200 object-cover dark:border-white/10"
+  />
+  <Image
+    src={publishPage04Image}
+    alt="Zing Protocol content editor - publish"
+    className="h-64 w-full rounded-lg border border-zinc-200 object-cover dark:border-white/10"
   />
 </div>
 
@@ -104,16 +133,14 @@ Ultra    → Ultra members only
 Customize your creator profile to attract members:
 
 1. **Upload Avatar** - Your profile picture
-2. **Add Bio** - Tell members who you are
-3. **Set Membership Prices** - Configure tier pricing
-4. **Add Social Links** - Connect your other platforms
+2. **Update personal info** - Tell members who you are
 
-<div className="not-prose my-8">
+<div className="not-prose my-8 flex gap-4 overflow-x-auto">
   <Image
-    src={loginPageImage}
+    src={profilePageImage}
     alt="Zing Protocol profile setup"
+    width={400}
     className="rounded-lg border border-zinc-200 dark:border-white/10"
-    placeholder="blur"
   />
 </div>
 
