@@ -54,21 +54,21 @@ Monetize your content through multiple revenue streams. Subscriptions, donations
 
 ## Platform Features {{ anchor: false }}
 
-Access APIs for content management, memberships, donations, and the Knowledge Graph. All powered by Walrus Protocol storage and SEAL Protocol encryption. {{ className: 'lead' }}
+Access APIs for content management, memberships, donations, and search. All powered by Walrus Protocol storage and SEAL Protocol encryption. {{ className: 'lead' }}
 
 <Resources />
 
-## Knowledge Marketplace {{ anchor: false }}
+## Search & Retrieval {{ anchor: false }}
 
-Unlock new revenue streams with AI-powered features. Knowledge Graphs, Pay-Per-Query APIs, and Synthesis Ghostwriter enable creators to monetize content for machine intelligence. {{ className: 'lead' }}
+Unlock new revenue streams with AI-powered features. Hybrid vector and lexical search, Pay-Per-Query APIs, and multi-source synthesis enable creators to monetize content for machine intelligence. {{ className: 'lead' }}
 
 <div className="not-prose my-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
   <div className="rounded-xl border border-zinc-200 p-6 dark:border-white/10">
     <h3 className="font-semibold text-zinc-900 dark:text-white">
-      Knowledge Graph
+      Search API
     </h3>
     <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-      RDF triples extracted from content for semantic AI queries.
+      Hybrid vector + lexical search with cross-encoder reranking for AI agent queries.
     </div>
     <div className="mt-3">
       <Button href="/knowledge-graph" variant="text" arrow="right">
@@ -81,7 +81,7 @@ Unlock new revenue streams with AI-powered features. Knowledge Graphs, Pay-Per-Q
       Pay-Per-Query
     </h3>
     <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-      Micro-transactions for AI agents accessing your knowledge.
+      Token-based micropayments for AI agents retrieving content chunks.
     </div>
     <div className="mt-3">
       <Button href="/pay-per-query" variant="text" arrow="right">
@@ -92,7 +92,7 @@ Unlock new revenue streams with AI-powered features. Knowledge Graphs, Pay-Per-Q
   <div className="rounded-xl border border-zinc-200 p-6 dark:border-white/10">
     <h3 className="font-semibold text-zinc-900 dark:text-white">Synthesis</h3>
     <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-      Multi-source research engine with automatic attribution.
+      Multi-source research engine across search indexes with automatic attribution.
     </div>
     <div className="mt-3">
       <Button href="/synthesis" variant="text" arrow="right">
@@ -110,7 +110,7 @@ Unlock new revenue streams with AI-powered features. Knowledge Graphs, Pay-Per-Q
 | **Storage**    | Walrus Protocol                    |
 | **Encryption** | SEAL Protocol                      |
 | **Auth**       | zkLogin (OpenID OAuth)             |
-| **Knowledge**  | Knowledge Graphs (Neo4j/SurrealDB) |
+| **Search**     | pgvector (HNSW) + pg_bigm + Cross-encoder |
 
 <div className="not-prose">
   <Button href="/platform-architecture" variant="text" arrow="right">

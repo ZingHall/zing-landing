@@ -88,8 +88,8 @@ await client.connect() // Handles everything
 | **Articles**        | Content CRUD operations     |
 | **Memberships**     | Subscribe/manage tiers      |
 | **Donations**       | Send/receive donations      |
-| **Knowledge Graph** | Query extracted triples     |
-| **Pay-Per-Query**   | AI agent micro-transactions |
+| **Search API**    | Query indexed content        |
+| **Pay-Per-Query** | AI agent micro-transactions  |
 
 ---
 
@@ -117,7 +117,7 @@ import type {
   Membership,
   Donation,
   WalletBalance,
-  KnowledgeTriple,
+  SearchResult,
 } from '@zing/sdk'
 ```
 
@@ -126,5 +126,6 @@ import type {
 ## Getting Help
 
 - [Authentication](/authentication) - Learn about zkLogin
+- [MCP & CLI](/mcp) - CLI tool and MCP server for agents
 - [Quickstart](/quickstart) - Get started
 - [Platform Architecture](/platform-architecture) - Technical stack

@@ -45,7 +45,7 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
     <CodeGroup title="Request" tag="GET" label="/v1/wallet/balance">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/wallet/balance \
+    curl https://api.prod.zing.you/wallet/balance \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
@@ -102,7 +102,7 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
     <CodeGroup title="Request" tag="POST" label="/v1/wallet/topup">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/wallet/topup \
+    curl https://api.prod.zing.you/wallet/topup \
       -H "Authorization: Bearer {jwt_token}" \
       -d amount="50.00"
     ```
@@ -159,7 +159,7 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
     <CodeGroup title="Request" tag="POST" label="/v1/wallet/payout">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/wallet/payout \
+    curl https://api.prod.zing.you/wallet/payout \
       -H "Authorization: Bearer {jwt_token}" \
       -d amount="25.00" \
       -d destination="0xexternal...wallet"
@@ -217,7 +217,7 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
     <CodeGroup title="Request" tag="GET" label="/v1/wallet/transactions">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/wallet/transactions \
+    curl https://api.prod.zing.you/wallet/transactions \
       -H "Authorization: Bearer {jwt_token}" \
       -d limit=10
     ```

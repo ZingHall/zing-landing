@@ -87,7 +87,7 @@ The article model contains all information about published content:
     <CodeGroup title="Request" tag="POST" label="/v1/articles">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/articles \
+    curl https://api.prod.zing.you/articles \
       -H "Authorization: Bearer {jwt_token}" \
       -d title="My First Article" \
       -d content="# Hello World..." \
@@ -152,7 +152,7 @@ The article model contains all information about published content:
     <CodeGroup title="Request" tag="GET" label="/v1/articles">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/articles \
+    curl https://api.prod.zing.you/articles \
       -H "Authorization: Bearer {jwt_token}" \
       -d limit=10
     ```
@@ -210,7 +210,7 @@ The article model contains all information about published content:
     <CodeGroup title="Request" tag="GET" label="/v1/articles/walrus_blob_abc123">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/articles/walrus_blob_abc123 \
+    curl https://api.prod.zing.you/articles/walrus_blob_abc123 \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
@@ -283,7 +283,7 @@ The article model contains all information about published content:
     <CodeGroup title="Request" tag="PUT" label="/v1/articles/walrus_blob_abc123">
 
     ```bash {{ title: 'cURL' }}
-    curl -X PUT https://api.zing.protocol/v1/articles/walrus_blob_abc123 \
+    curl -X PUT https://api.prod.zing.you/articles/walrus_blob_abc123 \
       -H "Authorization: Bearer {jwt_token}" \
       -d title="Updated Title" \
       -d access_tier="ultra"
@@ -316,7 +316,7 @@ The article model contains all information about published content:
     <CodeGroup title="Request" tag="DELETE" label="/v1/articles/walrus_blob_abc123">
 
     ```bash {{ title: 'cURL' }}
-    curl -X DELETE https://api.zing.protocol/v1/articles/walrus_blob_abc123 \
+    curl -X DELETE https://api.prod.zing.you/articles/walrus_blob_abc123 \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
@@ -344,7 +344,7 @@ The article model contains all information about published content:
     <CodeGroup title="Request" tag="POST" label="/v1/articles/walrus_blob_abc123/like">
 
     ```bash {{ title: 'cURL' }}
-    curl -X POST https://api.zing.protocol/v1/articles/walrus_blob_abc123/like \
+    curl -X POST https://api.prod.zing.you/articles/walrus_blob_abc123/like \
       -H "Authorization: Bearer {jwt_token}"
     ```
 

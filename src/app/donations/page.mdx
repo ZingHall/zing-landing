@@ -76,7 +76,7 @@ Donations allow supporters to send one-time USDC payments to creators as a way t
     <CodeGroup title="Request" tag="POST" label="/v1/donate">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/donate \
+    curl https://api.prod.zing.you/donate \
       -H "Authorization: Bearer {jwt_token}" \
       -d creator="0x123...creator" \
       -d amount="5.00" \
@@ -142,7 +142,7 @@ Donations allow supporters to send one-time USDC payments to creators as a way t
     <CodeGroup title="Request" tag="GET" label="/v1/creators/0x123.../donations">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/creators/0x123.../donations \
+    curl https://api.prod.zing.you/creators/0x123.../donations \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
@@ -204,7 +204,7 @@ Donations allow supporters to send one-time USDC payments to creators as a way t
     <CodeGroup title="Request" tag="GET" label="/v1/donations">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/donations \
+    curl https://api.prod.zing.you/donations \
       -H "Authorization: Bearer {jwt_token}"
     ```
 

@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'Platform Architecture',
   description:
-    'Learn how Zing Protocol integrates Sui blockchain, Walrus storage, and SEAL encryption to power the Decentralized Knowledge Marketplace.',
+    'Learn how Zing Protocol integrates Sui blockchain, Walrus storage, and hybrid RAG search to power creator content monetization.',
 }
 
 # Platform Architecture
 
-Zing Protocol is a creator monetization platform built on the Sui blockchain that enables creators to own their content, monetize through memberships and donations, and leverage decentralized storage. This page dives into the technical architecture that makes this possible. {{ className: 'lead' }}
+Zing Protocol is a creator monetization platform built on the Sui blockchain that enables creators to own their content, monetize through memberships and donations, and leverage decentralized storage with hybrid search retrieval. This page dives into the technical architecture that makes this possible. {{ className: 'lead' }}
 
 ## System Overview
 
@@ -15,7 +15,7 @@ The Zing Protocol platform consists of several integrated layers:
 - **Sui Blockchain** - Core transaction and ownership layer
 - **Walrus Protocol** - Decentralized storage for content blobs
 - **SEAL Protocol** - Encryption for tiered content access
-- **Knowledge Graph** - RDF triple extraction for AI agent queries
+- **Search & Retrieval** - Hybrid vector + lexical search with cross-encoder reranking for AI agent queries
 - **zkLogin** - Web2-style authentication without seed phrases
 
 ## Architecture Diagram
@@ -28,7 +28,7 @@ The Zing Protocol platform consists of several integrated layers:
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Sui Blockchain Layer                        │
+│ Sui Blockchain Layer                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
 │  │   zkLogin   │  │ Memberships  │  │     Wallet (USDC)       │ │
 │  │   (Auth)    │  │ & Donations │  │   Balance & Transfers   │ │
@@ -38,8 +38,8 @@ The Zing Protocol platform consists of several integrated layers:
         ┌───────────────────┼───────────────────┐
         ▼                   ▼                   ▼
 ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│ Walrus Storage│  │SEAL Encryption│  │Knowledge Graph│
-│  (Content)    │  │ (Access Ctrl) │  │  (RDF Triples)│
+│ Walrus Storage│  │SEAL Encryption│  │ Search Engine │
+│  (Content)    │  │ (Access Ctrl) │  │  (RAG)        │
 └───────────────┘  └───────────────┘  └───────────────┘
 ```
 
@@ -88,18 +88,22 @@ Premium   → Premium members only
 Ultra     → Ultra members only
 ```
 
-### Knowledge Graph Extraction
+### Search & Retrieval (RAG Pipeline)
 
-Knowledge triples (Subject → Predicate → Object) are extracted from content via LLM processing.
+Content is automatically indexed into a hybrid search pipeline combining vector embeddings, lexical retrieval, and cross-encoder reranking.
 
-```typescript
-// Example Knowledge Triple
-{
-  subject: "0x123...creator",
-  predicate: "published",
-  object: "0x456...article",
-  blob_id: "walrus_blob_id"
-}
+```
+Query
+  │
+  ├──► Vector Search (pgvector HNSW, 256-dim)
+  │    - Embedding via potion-multilingual-128M
+  │
+  ├──► Lexical Search (pg_bigm + ts_rank_cd)
+  │    - Bigram ILIKE + PostgreSQL full-text
+  │
+  └──► RRF Merge (k=60) → Cross-encoder Rerank
+       - bge-reranker-v2-m3 (ONNX quantized)
+       - Results filtered by relevance score
 ```
 
 ## Storage Tiers (Creator Energy)
@@ -116,7 +120,10 @@ The Zing API is built on the Sui blockchain with RESTful endpoints:
 
 ```bash
 # Base URL
-https://api.zing.protocol/v1
+https://api.prod.zing.you
+
+# Search Base URL
+https://search.zing.services/
 
 # Key endpoints
 GET  /articles          # List articles
@@ -154,8 +161,8 @@ Grant Access → Decryption Key Provided → Content Accessible
 ```
 
 <Note>
-  The Knowledge Graph and Pay-Per-Query features are currently in development.
-  See the [Knowledge Graph](/knowledge-graph) and
+  The Search API and Pay-Per-Query features are currently in development.
+  See the [Search API](/knowledge-graph) and
   [Pay-Per-Query](/pay-per-query) documentation for more details on upcoming
   features.
 </Note>
@@ -175,6 +182,8 @@ Grant Access → Decryption Key Provided → Content Accessible
 ## Next Steps
 
 - [Authentication](/authentication) - Learn how zkLogin works
+- [Search API](/knowledge-graph) - Explore the RAG search pipeline
 - [Quickstart](/quickstart) - Get started with creator onboarding
 - [Content API](/content) - Learn about content management
 - [Memberships](/memberships) - Understand the membership system
+- [MCP & CLI](/mcp) - CLI tool and MCP server for agents

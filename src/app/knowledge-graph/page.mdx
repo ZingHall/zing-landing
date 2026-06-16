@@ -1,123 +1,198 @@
 export const metadata = {
-  title: 'Knowledge Graph',
+  title: 'Search API',
   description:
-    'Learn about the Knowledge Graph API for extracting RDF triples from content and enabling AI agent queries.',
+    'Learn about the hybrid RAG search API for querying indexed content with vector and lexical retrieval.',
 }
 
-# Knowledge Graph API
+# Search API
 
-The Knowledge Graph API enables AI agents and researchers to query structured data extracted from creator content. Knowledge triples (Subject → Predicate → Object) are automatically extracted from articles and stored for semantic querying. {{ className: 'lead' }}
+The Search API provides hybrid vector + lexical retrieval across all indexed wiki content, with optional cross-encoder reranking and per-chunk paid access. Content is automatically chunked, embedded, and indexed when articles are published. {{ className: 'lead' }}
 
-<Note>
-  **Status**: Knowledge Graph extraction is currently in development. The API
-  endpoints below represent the planned implementation.
-</Note>
-
-## What is a Knowledge Triple?
-
-Knowledge triples are the basic unit of the Knowledge Market:
+## Base URL
 
 ```
-Subject → Predicate → Object
-
-Example:
-"Creator Alice" → "published" → "Article about AI"
+https://search.zing.services/
 ```
 
-This structured format allows AI agents to:
+## Authentication
 
-- Query specific facts across multiple articles
-- Build semantic understanding of content relationships
-- Perform complex reasoning over creator knowledge bases
+The Search API has two access modes:
 
-## The Knowledge Triple Model
+### Free Access (Internal App)
 
-### Properties
+Our web app uses these endpoints via backend proxy:
 
-<Properties>
-  <Property name="id" type="string">
-    Unique identifier for the triple.
-  </Property>
-  <Property name="subject" type="string">
-    The subject entity (e.g., creator address, article ID).
-  </Property>
-  <Property name="predicate" type="string">
-    The relationship (e.g., "published", "discussed", "analyzed").
-  </Property>
-  <Property name="object" type="string">
-    The object entity (e.g., article ID, topic).
-  </Property>
-  <Property name="blob_id" type="string">
-    The Walrus blob ID of the source content.
-  </Property>
-  <Property name="confidence" type="number">
-    Extraction confidence score (0-1).
-  </Property>
-  <Property name="created_at" type="timestamp">
-    When the triple was extracted.
-  </Property>
-</Properties>
+| Header   | Value              |
+| -------- | ------------------ |
+| `X-App-Key` | Your `APP_API_KEY` |
+
+### Paid Access (Public API)
+
+External developers pay per request via USDC on Sui:
+
+1. Sign an `ApiAccessMessage` with your Sui wallet
+2. Send USDC to the platform address
+3. Include `signature`, `bytes`, and `transaction_digest` in the request
 
 ---
 
-## Extract Triples {{ tag: 'POST', label: '/v1/kg/extract' }}
+## How Search Works
+
+Content is indexed through a multi-stage RAG pipeline:
+
+```
+Query
+  │
+  ├──► Vector Search (pgvector HNSW, 256-dim)
+  │    - Embedding via potion-multilingual-128M
+  │    - Cosine similarity, top candidates
+  │
+  ├──► Lexical Search (pg_bigm + ts_rank_cd)
+  │    - Bigram ILIKE + PostgreSQL full-text
+  │
+  └──► RRF Merge (k=60) → Cross-encoder Rerank
+       - bge-reranker-v2-m3 (ONNX quantized)
+       - Content-type-aware blending (prose/code/table)
+       - Score threshold filter (min 0.15)
+```
+
+## Chunking Strategy
+
+Articles are split into chunks using markdown-aware chunking:
+
+| Property     | Description                                    |
+| ------------ | ---------------------------------------------- |
+| **Target**   | ~200 tokens per chunk, ~25 token overlap       |
+| **Types**    | `prose`, `code`, `table`                       |
+| **Atomic**   | Code blocks and tables are never split         |
+| **Excerpts** | Prose: 280 chars, Code: 400 chars, Table: header + 3 rows |
+
+Each chunk stores full `chunk_text` and a truncated `excerpt`. Use the expand endpoint to retrieve full untruncated text.
+
+---
+
+## Global Search (Free) {{ tag: 'GET', label: '/search' }}
 
 <Row>
   <Col>
 
-    Extract knowledge triples from an article. This is automatically done when content is published, but can also be triggered manually.
+    Search across all indexed wikis. Returns top results sorted by relevance score.
 
-    ### Required attributes
+    ### Query parameters
 
     <Properties>
-      <Property name="article_id" type="string">
-        The article to extract triples from.
+      <Property name="q" type="string">
+        Search query.
+      </Property>
+      <Property name="limit" type="integer">
+        Max results (default: 20).
       </Property>
     </Properties>
 
-    ### How it works
-
-    1. LLM processes article content
-    2. Identifies entities (subjects) and relationships (predicates)
-    3. Generates RDF triples
-    4. Stores triples linked to Walrus blob ID
+    Results are filtered server-side — chunks with `relevance_score < 0.15` are excluded.
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/v1/kg/extract">
+    <CodeGroup title="Request" tag="GET" label="/search">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/kg/extract \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d article_id="walrus_blob_abc123"
+    curl "https://search.zing.services/search?q=what+is+DeFi&limit=5" \
+      -H "X-App-Key: $APP_API_KEY"
     ```
 
-    ```js
-    const extraction = await client.knowledgeGraph.extract({
-      articleId: 'walrus_blob_abc123',
-    });
+    ```json {{ title: 'Response' }}
+    [
+      {
+        "relative_path": "0x1aa2.../0xf6bd.../main.md",
+        "owner_address": "0x1aa2...",
+        "title": "What is DeFi?",
+        "summary": "Decentralized Finance...",
+        "tags": ["markets", "finance"],
+        "relevance_score": 2.14,
+        "chunk_token_count": 156,
+        "excerpt": "DeFi is a new paradigm...",
+        "heading_path": ["Introduction", "What is DeFi"],
+        "created_at": 1712345678
+      }
+    ]
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Wiki Search (Free) {{ tag: 'GET', label: '/query' }}
+
+<Row>
+  <Col>
+
+    Search within a specific wiki's content. Returns results with `results`, `total`, and `wiki_tags`.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="wiki" type="string">
+        Owner address (e.g., `0x123...`).
+      </Property>
+      <Property name="q" type="string">
+        Search query.
+      </Property>
+      <Property name="mode" type="string">
+        Search mode: `vector`, `lexical`, or `hybrid` (default).
+      </Property>
+      <Property name="limit" type="integer">
+        Max results (default: 20).
+      </Property>
+      <Property name="rerank" type="string">
+        Reranker: `cross-encoder-onnx` (default), `embedding`, `heuristic`.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/query">
+
+    ```bash {{ title: 'cURL' }}
+    curl "https://search.zing.services/query?wiki=0x32c21ad0de99fd2150a231fab36f4c0b2e55a95d6c3e367621870fb33bdb2389&q=Web3" \
+      -H "X-App-Key: $APP_API_KEY"
     ```
 
     ```json {{ title: 'Response' }}
     {
-      "article_id": "walrus_blob_abc123",
-      "triples_extracted": 15,
-      "triples": [
+      "results": [
         {
-          "id": "triple_001",
-          "subject": "0xcreator...alice",
-          "predicate": "published",
-          "object": "walrus_blob_abc123",
-          "confidence": 0.95
-        },
-        {
-          "id": "triple_002",
-          "subject": "walrus_blob_abc123",
-          "predicate": "discusses",
-          "object": "artificial_intelligence",
-          "confidence": 0.88
+          "article_id": "0xdef456...",
+          "relative_path": "0xowner/0xarticle/main.md",
+          "title": "What is Web3",
+          "summary": null,
+          "best_match": {
+            "excerpt": "Web3 is the next generation of the internet...",
+            "heading_path": ["Introduction", "What is Web3"],
+            "char_start": 0,
+            "char_end": 200
+          },
+          "chunk_token_count": 116,
+          "raw_vector_score": 0.72,
+          "raw_lexical_score": 3.25,
+          "tags": ["cryptocurrency", "defi"],
+          "signals": {
+            "relevance_score": 0.85,
+            "article_token_count": 4200,
+            "recency_days": 12,
+            "tag_confidence": 0.72,
+            "wiki_file_count": 42,
+            "primary_tag": "cryptocurrency"
+          }
         }
+      ],
+      "total": 1,
+      "wiki_tags": [
+        {"tag": "cryptocurrency", "frequency": 10, "avg_score": 0.7}
       ]
     }
     ```
@@ -129,132 +204,92 @@ This structured format allows AI agents to:
 
 ---
 
-## Get Article Triples {{ tag: 'GET', label: '/v1/kg/triples/:article_id' }}
+## Paid Global Search {{ tag: 'POST', label: '/search' }}
 
 <Row>
   <Col>
 
-    Retrieve all knowledge triples extracted from a specific article.
+    Search across all indexed wikis with per-result pricing. Requires a signed `ApiAccessMessage` and an on-chain USDC payment.
 
-    ### Path parameters
+    ### Cost structure
 
-    <Properties>
-      <Property name="article_id" type="string">
-        The article ID to get triples for.
-      </Property>
-    </Properties>
+    - **Flat search fee**: $0.0005 (for limit ≤ 20, scales linearly for larger limits)
+    - **Per-result fee**: based on token count × base rate ($0.0004 per 1K tokens) + creator content fees
+    - Results returned greedily within budget (highest relevance first)
 
-  </Col>
-  <Col sticky>
-
-    <CodeGroup title="Request" tag="GET" label="/v1/kg/triples/walrus_blob_abc123">
-
-    ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/kg/triples/walrus_blob_abc123 \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const triples = await client.knowledgeGraph.getTriples(
-      'walrus_blob_abc123'
-    );
-    ```
-
-    ```json {{ title: 'Response' }}
-    {
-      "article_id": "walrus_blob_abc123",
-      "triples": [
-        {
-          "id": "triple_001",
-          "subject": "0xcreator...alice",
-          "predicate": "published",
-          "object": "walrus_blob_abc123",
-          "confidence": 0.95,
-          "created_at": 1709312400
-        }
-      ],
-      "total_count": 15
-    }
-    ```
-
-    </CodeGroup>
-
-  </Col>
-</Row>
-
----
-
-## Search Triples {{ tag: 'GET', label: '/v1/kg/search' }}
-
-<Row>
-  <Col>
-
-    Search across all knowledge triples. Supports filtering by subject, predicate, object, and creator.
-
-    ### Query parameters
+    ### Request body
 
     <Properties>
-      <Property name="subject" type="string">
-        Filter by subject entity.
+      <Property name="q" type="string">
+        Search query.
       </Property>
-      <Property name="predicate" type="string">
-        Filter by predicate.
-      </Property>
-      <Property name="object" type="string">
-        Filter by object entity.
-      </Property>
-      <Property name="creator" type="string">
-        Filter by creator address.
-      </Property>
-      <Property name="query" type="string">
-        Natural language query (when using AI search).
+      <Property name="wiki" type="string">
+        `global` or owner address.
       </Property>
       <Property name="limit" type="integer">
-        Number of results (default: 10).
+        Max results (capped at 50).
+      </Property>
+      <Property name="transaction_digest" type="string">
+        Sui transaction digest.
+      </Property>
+      <Property name="signature" type="string">
+        Base64-encoded signature.
+      </Property>
+      <Property name="bytes" type="string">
+        Base64-encoded BCS `ApiAccessMessage`.
       </Property>
     </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/kg/search">
+    <CodeGroup title="Request" tag="POST" label="/search">
 
     ```bash {{ title: 'cURL' }}
-    curl "https://api.zing.protocol/v1/kg/search?predicate=discusses&object=AI" \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const results = await client.knowledgeGraph.search({
-      predicate: 'discusses',
-      object: 'AI',
-    });
+    curl -X POST https://search.zing.services/search \
+      -H "Content-Type: application/json" \
+      -d '{
+        "q": "what is DeFi?",
+        "wiki": "global",
+        "limit": 20,
+        "transaction_digest": "8xK2...",
+        "signature": "base64_sig...",
+        "bytes": "base64_bcs..."
+      }'
     ```
 
     ```json {{ title: 'Response' }}
     {
+      "query_text": "what is DeFi?",
+      "wiki_scope": "global",
       "results": [
         {
-          "id": "triple_002",
-          "subject": "0xcreator...alice",
-          "predicate": "discusses",
-          "object": "artificial_intelligence",
-          "blob_id": "walrus_blob_abc123",
-          "confidence": 0.88,
-          "creator": "0xcreator...alice"
-        },
-        {
-          "id": "triple_042",
-          "subject": "0xcreator...bob",
-          "predicate": "discusses",
-          "object": "machine_learning",
-          "blob_id": "walrus_blob_xyz789",
-          "confidence": 0.92,
-          "creator": "0xcreator...bob"
+          "article_id": "0xcb07...",
+          "relative_path": "0x1aa2.../0xcb07.../main.md",
+          "title": "What is Web3",
+          "best_match": {
+            "excerpt": "Web3 is the next generation...",
+            "heading_path": ["Introduction"],
+            "char_start": 0,
+            "char_end": 200
+          },
+          "chunk_token_count": 116,
+          "raw_vector_score": 0.72,
+          "raw_lexical_score": 3.25,
+          "signals": {
+            "relevance_score": 1.40,
+            "article_token_count": 4200,
+            "recency_days": 3
+          }
         }
       ],
-      "total_count": 42,
-      "query_time_ms": 15
+      "budget": {
+        "paid_usdc": "0.010000",
+        "consumed_usdc": "0.000797",
+        "remaining_usdc": "0.009203",
+        "platform_fee_usdc": "0.000743",
+        "creators_fee_usdc": "0.000054"
+      }
     }
     ```
 
@@ -265,53 +300,103 @@ This structured format allows AI agents to:
 
 ---
 
-## Creator Knowledge Graph {{ tag: 'GET', label: '/v1/kg/creators/:address' }}
+## Paid Chunk Retrieval {{ tag: 'POST', label: '/chunks' }}
 
 <Row>
   <Col>
 
-    Get the aggregated knowledge graph for a specific creator. Shows all triples from their content.
+    Retrieve semantic chunks with per-chunk pricing. Returns chunks greedily accumulated within budget (highest relevance first).
 
-    ### Path parameters
+    ### Cost structure
+
+    - **Flat infrastructure fee**: $0.0005 (limit ≤ 20)
+    - **Per-chunk base fee**: chunk_tokens / 1000 × $0.0004
+    - **Per-chunk content fee**: chunk_tokens / 1000 × creator_rate (0 if subscribed)
+
+    ### Request body
 
     <Properties>
-      <Property name="address" type="string">
-        The creator's Sui address.
+      <Property name="q" type="string">
+        Search query.
+      </Property>
+      <Property name="wiki" type="string">
+        `global` or owner address.
+      </Property>
+      <Property name="limit" type="integer">
+        Max results (capped at 50).
+      </Property>
+      <Property name="expand" type="boolean">
+        When `true`, returns full `chunk_text` instead of excerpt (no additional charge).
+      </Property>
+      <Property name="article_ids" type="array">
+        Optional filter to specific article IDs.
+      </Property>
+      <Property name="transaction_digest" type="string">
+        Sui transaction digest.
+      </Property>
+      <Property name="signature" type="string">
+        Base64-encoded signature.
+      </Property>
+      <Property name="bytes" type="string">
+        Base64-encoded BCS `ApiAccessMessage`.
       </Property>
     </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/kg/creators/0xcreator...alice">
+    <CodeGroup title="Request" tag="POST" label="/chunks">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/kg/creators/0xcreator...alice \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const kg = await client.knowledgeGraph.forCreator(
-      '0xcreator...alice'
-    );
+    curl -X POST https://search.zing.services/chunks \
+      -H "Content-Type: application/json" \
+      -d '{
+        "q": "what is Web3?",
+        "wiki": "global",
+        "limit": 10,
+        "expand": false,
+        "article_ids": null,
+        "transaction_digest": "0xabc...",
+        "signature": "sig...",
+        "bytes": "bcs..."
+      }'
     ```
 
     ```json {{ title: 'Response' }}
     {
-      "creator": "0xcreator...alice",
-      "total_triples": 1250,
-      "total_articles": 45,
-      "top_predicates": [
-        { "predicate": "discusses", "count": 320 },
-        { "predicate": "analyzes", "count": 180 },
-        { "predicate": "compares", "count": 95 }
+      "query_text": "what is Web3?",
+      "wiki_scope": "global",
+      "chunks": [
+        {
+          "chunk_id": 94,
+          "article_id": "0xf6bd...",
+          "relative_path": "0x1aa2.../0xf6bd.../main.md",
+          "owner_address": "0x1aa2...",
+          "title": "What is Web3",
+          "heading_path": ["Introduction"],
+          "chunk_token_count": 116,
+          "scores": {
+            "document": 1.40,
+            "passage": 3.25,
+            "blended": 2.14,
+            "vector": 0.72,
+            "lexical": 3.25
+          },
+          "text": "Web3 is the next generation of the internet...",
+          "content_type": "prose",
+          "language": null,
+          "truncated": null
+        }
       ],
-      "top_objects": [
-        { "object": "AI", "count": 85 },
-        { "object": "blockchain", "count": 62 },
-        { "object": "web3", "count": 48 }
-      ],
-      "recent_triples": [...]
+      "budget": {
+        "paid_usdc": "0.010000",
+        "consumed_usdc": "0.000797",
+        "remaining_usdc": "0.009203",
+        "platform_fee_usdc": "0.000743",
+        "creators_fee_usdc": "0.000054"
+      },
+      "formatted_context": "\n\n[Source 1]...",
+      "total_tokens": 580
     }
     ```
 
@@ -322,88 +407,300 @@ This structured format allows AI agents to:
 
 ---
 
-## Extraction Process
+## Expand Chunks (Paid) {{ tag: 'POST', label: '/chunk/expand' }}
 
-```
-Article Published
-       ↓
-LLM Processing
-       ↓
-┌─────────────────────────────────────────┐
-│  Entity Recognition                      │
-│  - Creators, Articles, Topics            │
-└─────────────────────────────────────────┘
-       ↓
-┌─────────────────────────────────────────┐
-│  Relationship Detection                  │
-│  - published, discusses, analyzes        │
-│  - created, updated, referenced          │
-└─────────────────────────────────────────┘
-       ↓
-┌─────────────────────────────────────────┐
-│  Triple Generation                       │
-│  Subject → Predicate → Object            │
-└─────────────────────────────────────────┘
-       ↓
-┌─────────────────────────────────────────┐
-│  Confidence Scoring                      │
-│  - Based on extraction clarity           │
-│  - Stored with each triple               │
-└─────────────────────────────────────────┘
-       ↓
-Stored in Graph Database
-(Neo4j / SurrealDB)
-       ↓
-Available for Query
-```
+<Row>
+  <Col>
 
-## Use Cases
+    Retrieve the full untruncated text for up to 20 chunks by their IDs. Requires a signed `ExpandAccessMessage` and an on-chain USDC payment.
 
-| Use Case                 | Description                                    |
-| ------------------------ | ---------------------------------------------- |
-| **Research**             | AI agents query facts across multiple creators |
-| **Recommendations**      | Suggest articles based on knowledge overlap    |
-| **Trend Analysis**       | Track topics discussed across the platform     |
-| **Plagiarism Detection** | Identify copied content via similar triples    |
-| **Sponsorship Matching** | Match brands to creators by topic alignment    |
+    ### Request body
 
-## Integration with Pay-Per-Query
+    <Properties>
+      <Property name="chunk_ids" type="array">
+        Chunk IDs to expand (max 20).
+      </Property>
+      <Property name="transaction_digest" type="string">
+        Sui transaction digest.
+      </Property>
+      <Property name="signature" type="string">
+        Base64-encoded signature.
+      </Property>
+      <Property name="bytes" type="string">
+        Base64-encoded BCS `ExpandAccessMessage`.
+      </Property>
+    </Properties>
 
-Knowledge triples are the basis for the Pay-Per-Query system:
+  </Col>
+  <Col sticky>
 
-```
-Query Request → Payment Verification → Triple Access
-     ↓
-     ↓         (via PPQ Rails)
-     ↓
-Locked until query fee paid
-     ↓
-AI agent receives triple data
-```
+    <CodeGroup title="Request" tag="POST" label="/chunk/expand">
 
-<div className="not-prose">
-  <Button href="/pay-per-query" variant="text" arrow="right">
-    <>Learn about Pay-Per-Query API</>
-  </Button>
-</div>
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://search.zing.services/chunk/expand \
+      -H "Content-Type: application/json" \
+      -d '{
+        "chunk_ids": [1603, 94, 1802],
+        "transaction_digest": "5KzN...",
+        "signature": "AM3x...",
+        "bytes": "BQAAAGNo..."
+      }'
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "chunks": [
+        {
+          "chunk_id": 1603,
+          "article_id": "0xb195...",
+          "owner_address": "0x1aa2...",
+          "ordinal": 2,
+          "heading_path": ["OpenID providers"],
+          "char_start": 500,
+          "char_end": 900,
+          "token_count": 88,
+          "chunk_text": "| Provider | Can support? | ... |",
+          "content_type": "table",
+          "language": null,
+          "truncated": {
+            "content_type": "table",
+            "table_rows_total": 15,
+            "table_rows_shown": 3
+          }
+        }
+      ],
+      "budget": {
+        "paid_usdc": "1.000000",
+        "consumed_usdc": "0.002320",
+        "remaining_usdc": "0.997680"
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Search Formula {{ tag: 'GET', label: '/search/formula' }}
+
+<Row>
+  <Col>
+
+    Returns the exact scoring weights used in the search pipeline. No authentication required.
+
+    ### Scoring constants
+
+    | Constant                    | Value | Description                   |
+    | --------------------------- | ----- | ----------------------------- |
+    | `RRF_K`                     | 60    | RRF rank smoothing parameter   |
+    | `RRF_RAW_WEIGHT`            | 0.5   | Raw similarity weight in RRF   |
+    | `CROSS_ENCODER_ORIGINAL`    | 0.2   | RRF score weight in final      |
+    | `CROSS_ENCODER_SCORE`       | 0.8   | Cross-encoder score weight     |
+    | `DEFAULT_MIN_SCORE`         | 0.15  | Minimum relevance threshold    |
+    | **Prose**: doc=0.6, passage=0.4 |     |                                |
+    | **Code**:  doc=0.3, passage=0.7 |     |                                |
+    | **Table**: doc=0.3, passage=0.7 |     |                                |
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/search/formula">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://search.zing.services/search/formula
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "rrf_k": 60,
+      "rrf_raw_weight": 0.5,
+      "reranker": {
+        "cross_encoder": {
+          "original_score_weight": 0.2,
+          "cross_encoder_score_weight": 0.8
+        }
+      },
+      "min_score": 0.15,
+      "embedding_model": "minishlab/potion-base-128M",
+      "embedding_dimensions": 256,
+      "cross_encoder_model": "onnx-community/bge-reranker-v2-m3-ONNX"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Creator Fee Configuration {{ tag: 'GET', label: '/chunk/config/:address' }}
+
+<Row>
+  <Col>
+
+    Content fees are **level-based**. Each article has a `subscription_level` (0-2). Creators set different fees per level. Get the effective fee for each level.
+
+    ### Response fields
+
+    <Properties>
+      <Property name="fee_per_1k_tokens_usdc" type="object">
+        Map of level → fee per 1K tokens (in micro-USDC). Uses creator's configured fee if set, otherwise platform default (800 = $0.0008).
+      </Property>
+      <Property name="search_enabled" type="boolean">
+        Whether the wiki is included in global search.
+      </Property>
+    </Properties>
+
+    Use `PUT /chunk/config` to set fee levels and `PUT /chunk/config/enabled` to toggle search visibility. Both require a Sui wallet signature.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/chunk/config/0x1aa2...">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://search.zing.services/chunk/config/0x1aa2c40369fa0fffb12fe6e1415b8aba52d15cc3cf59e001adc5d2687920fbd6
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "owner_address": "0x1aa2...",
+      "fee_per_1k_tokens_usdc": {
+        "0": 800,
+        "1": 1200,
+        "2": 800
+      },
+      "search_enabled": true
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Tags {{ tag: 'GET', label: '/tags/*' }}
+
+<Row>
+  <Col>
+
+    Content is automatically tagged using 36 curated topic categories. Tags are extracted per-file using chunk embeddings.
+
+    ### Available endpoints
+
+    | Endpoint              | Description                        |
+    | --------------------- | ---------------------------------- |
+    | `GET /tags/:owner`    | Get tags for a specific wiki       |
+    | `POST /tags/batch`    | Get tags for multiple wikis        |
+    | `GET /tags/trending`  | Global trending tags               |
+    | `GET /tags/:tag/articles` | Articles matching a tag         |
+    | `GET /creators/:tag`  | Creators matching a tag            |
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/tags/trending">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://search.zing.services/tags/trending
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "tags": [
+        {"tag": "cryptocurrency", "frequency": 150, "avg_score": 0.72, "parent_tag": "markets"},
+        {"tag": "ai", "frequency": 120, "avg_score": 0.68, "parent_tag": "technology"},
+        {"tag": "defi", "frequency": 85, "avg_score": 0.65, "parent_tag": "markets"}
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Indexing {{ tag: 'GET', label: '/index/:owner/status' }}
+
+<Row>
+  <Col>
+
+    Content is automatically indexed via a background batch scheduler. The following endpoints allow creators to manage their own indexed content.
+
+    ### Endpoints
+
+    <Properties>
+      <Property name="GET /index/:owner/status" type="public">
+        Check indexing status: `pending`, `indexing`, `ready`, or `error`.
+      </Property>
+      <Property name="POST /index/:owner/articles" type="signature">
+        Index specific articles. Requires Sui wallet signature with on-chain ownership verification.
+      </Property>
+      <Property name="DELETE /index/:owner/articles/:id" type="signature">
+        Remove indexed content for an article destroyed on-chain. Requires Sui wallet signature.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/index/:owner/status">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://search.zing.services/index/0x32c21ad0de99fd2150a231fab36f4c0b2e55a95d6c3e367621870fb33bdb2389/status
+    ```
+
+    ```json {{ title: 'Response' }}
+    {
+      "owner_address": "0x32c21ad...",
+      "status": "ready",
+      "last_indexed_at": "2026-04-21T15:30:00Z",
+      "file_count": 42
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
 
 ## Technical Details
 
-| Component          | Technology                |
-| ------------------ | ------------------------- |
-| **Graph Database** | Neo4j or SurrealDB        |
-| **Extraction**     | LLM-based (configurable)  |
-| **Storage**        | Linked to Walrus blob IDs |
-| **Access**         | Via Pay-Per-Query rails   |
+| Component              | Technology                              |
+| ---------------------- | --------------------------------------- |
+| **Web framework**      | Axum (Rust, tokio)                      |
+| **Database**           | PostgreSQL 16+                          |
+| **Vector search**      | pgvector (HNSW, cosine, 256-dim)       |
+| **Lexical search**     | pg_bigm (bigram GIN index) + ts_rank_cd |
+| **Embedding model**    | minishlab/potion-multilingual-128M      |
+| **Cross-encoder**      | onnx-community/bge-reranker-v2-m3-ONNX |
+| **Blockchain**         | Sui (RPC, BCS deserialization)          |
+| **Blob storage**       | Walrus (content download)               |
+| **Encryption**         | SEAL (decryption via sui-sdk)            |
 
-## Coming Soon
+## Chunking and Excerpt Types
 
-- **Multi-modal extraction** - Extract triples from images
-- **Temporal knowledge** - Time-series knowledge graphs
-- **Cross-lingual KG** - Multi-language support
+| Type     | Excerpt Strategy                                      | Max Chars |
+| -------- | ----------------------------------------------------- | --------- |
+| **Prose**   | Strip markdown, truncate at sentence boundary       | 280       |
+| **Code**   | Line-boundary truncation, preserve syntax            | 400       |
+| **Table**  | Header + first 3 data rows + "(N more rows)"        | 3 rows    |
+
+When a chunk's excerpt is truncated, the response includes a `truncated` field with metadata about what was shortened. Use `POST /chunk/expand` to retrieve full untruncated text.
 
 ## Next Steps
 
-- [Pay-Per-Query API](/pay-per-query) - Learn how to access triples
+- [Pay-Per-Query API](/pay-per-query) - Learn how to pay for chunk access
+- [MCP & CLI](/mcp) - CLI tool and MCP server for AI agents
 - [Attribution Ledger](/attribution-ledger) - Track AI usage
-- [Synthesis](/synthesis) - Multi-source research
+- [Synthesis](/synthesis) - Multi-source research engine

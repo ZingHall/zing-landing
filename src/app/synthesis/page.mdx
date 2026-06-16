@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'Synthesis',
   description:
-    'Learn about the Synthesis Ghostwriter agent for multi-source collaborative research across private Knowledge Graphs.',
+    'Learn about the Synthesis engine for multi-source collaborative research across indexed content with attribution.',
 }
 
-# Synthesis (Ghostwriter)
+# Synthesis
 
-Synthesis is a multi-source agent capable of querying across private Knowledge Graphs for collaborative research. It enables AI agents and researchers to compile comprehensive reports from multiple independent creators while ensuring proper attribution and royalties. {{ className: 'lead' }}
+Synthesis is a multi-source research engine capable of querying across indexed wikis for collaborative research. It enables AI agents and researchers to compile comprehensive reports from multiple independent creators while ensuring proper attribution and royalties. {{ className: 'lead' }}
 
 <Note>
   **Status**: Synthesis is currently in development. The API endpoints below
@@ -15,7 +15,7 @@ Synthesis is a multi-source agent capable of querying across private Knowledge G
 
 ## Overview
 
-Synthesis (codenamed "Ghostwriter") breaks down the traditional research workflow:
+Synthesis breaks down the traditional research workflow:
 
 ```
 Traditional Research:
@@ -23,15 +23,15 @@ Creator A's Blog → Creator B's Article → Creator C's Paper → Write Report
 (You must subscribe to all, manually synthesize)
 
 Synthesis:
-AI queries multiple KGs → Compiles report → Pays each creator → You get synthesis
+AI queries multiple indexes → Compiles report → Pays each creator → You get synthesis
 ```
 
 ## What is Synthesis?
 
 Synthesis is a **collaborative research engine** that:
 
-1. **Queries multiple private Knowledge Graphs** simultaneously
-2. **Aggregates facts and findings** from different creators
+1. **Queries multiple creator indexes** simultaneously
+2. **Aggregates content chunks** from different creators
 3. **Maintains proper attribution** throughout
 4. **Generates comprehensive reports** with citations
 5. **Handles payments** to all contributing creators
@@ -63,7 +63,7 @@ Synthesis is a **collaborative research engine** that:
     When the synthesis was completed.
   </Property>
   <Property name="total_fee" type="string">
-    Total fee for the synthesis (base + query royalties).
+    Total fee for the synthesis (base + chunk retrieval fees).
   </Property>
 </Properties>
 
@@ -93,15 +93,15 @@ Synthesis is a **collaborative research engine** that:
       <Property name="depth" type="enum">
         Research depth: `quick` (1-2 sources), `standard` (3-5), `comprehensive` (5+).
       </Property>
-      <Property name="specific_triples" type="array">
-        Pre-identified triple IDs to include.
+      <Property name="specific_chunks" type="array">
+        Pre-identified chunk IDs to include.
       </Property>
     </Properties>
 
     ### Fee structure
 
     - **Synthesis Fee**: Flat fee based on depth ($0.01 - $0.10)
-    - **Query Royalties**: Per-triple fees (80% to creators)
+    - **Chunk Retrieval**: Per-chunk token-based fees (80% to creators)
 
   </Col>
   <Col sticky>
@@ -109,23 +109,13 @@ Synthesis is a **collaborative research engine** that:
     <CodeGroup title="Request" tag="POST" label="/v1/synthesis/request">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/synthesis/request \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d query="What are the latest developments in AI safety research?" \
-      -d sources='["0xcreator...alice", "0xcreator...bob", "0xcreator...carol"]' \
-      -d depth="standard"
-    ```
-
-    ```js
-    const request = await client.synthesis.create({
-      query: 'What are the latest developments in AI safety research?',
-      sources: [
-        '0xcreator...alice',
-        '0xcreator...bob',
-        '0xcreator...carol',
-      ],
-      depth: 'standard',
-    });
+    curl https://api.prod.zing.you/v1/synthesis/request \
+      -H "Content-Type: application/json" \
+      -d '{
+        "query": "What are the latest developments in AI safety research?",
+        "sources": ["0xcreator...alice", "0xcreator...bob", "0xcreator...carol"],
+        "depth": "standard"
+      }'
     ```
 
     ```json {{ title: 'Response' }}
@@ -142,7 +132,7 @@ Synthesis is a **collaborative research engine** that:
       "estimated_fee": "0.05",
       "breakdown": {
         "synthesis_base": "0.01",
-        "query_royalties_est": "0.04"
+        "chunk_retrieval_est": "0.04"
       },
       "created_at": 1709312400
     }
@@ -160,7 +150,7 @@ Synthesis is a **collaborative research engine** that:
 <Row>
   <Col>
 
-    Get the result of a synthesis request.
+    Get the result of a synthesis request. Returns the compiled report with citations.
 
     ### Path parameters
 
@@ -176,12 +166,7 @@ Synthesis is a **collaborative research engine** that:
     <CodeGroup title="Request" tag="GET" label="/v1/synthesis/synth_abc123">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/synthesis/synth_abc123 \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const result = await client.synthesis.get('synth_abc123');
+    curl https://api.prod.zing.you/v1/synthesis/synth_abc123
     ```
 
     ```json {{ title: 'Response (Completed)' }}
@@ -194,7 +179,7 @@ Synthesis is a **collaborative research engine** that:
         "sections": [
           {
             "heading": "Current Approaches",
-            "content": "Based on triple data from creators...",
+            "content": "Based on indexed content from creators...",
             "citations": [
               {
                 "creator": "0xcreator...alice",
@@ -204,23 +189,23 @@ Synthesis is a **collaborative research engine** that:
             ]
           }
         ],
-        "total_facts_used": 45,
+        "total_chunks_used": 45,
         "unique_sources": 3
       },
       "citations": [
         {
           "creator": "0xcreator...alice",
-          "triples_used": 15,
+          "chunks_used": 15,
           "fee": "0.015"
         },
         {
           "creator": "0xcreator...bob",
-          "triples_used": 18,
+          "chunks_used": 18,
           "fee": "0.018"
         },
         {
           "creator": "0xcreator...carol",
-          "triples_used": 12,
+          "chunks_used": 12,
           "fee": "0.012"
         }
       ],
@@ -260,12 +245,7 @@ Synthesis is a **collaborative research engine** that:
     <CodeGroup title="Request" tag="GET" label="/v1/synthesis/history">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/synthesis/history \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const history = await client.synthesis.history();
+    curl https://api.prod.zing.you/v1/synthesis/history
     ```
 
     ```json {{ title: 'Response' }}
@@ -309,14 +289,14 @@ Synthesis is a **collaborative research engine** that:
          ↓
 3. For each source:
    ┌─────────────────────────────────────┐
-   │  PPQ Query via /v1/ppq/initiate     │
+   │  Search chunk index via /chunks     │
    └─────────────────────────────────────┘
          ↓
-4. Aggregate all triples
+4. Aggregate all chunks
          ↓
 5. Generate synthesis with citations
          ↓
-6. Calculate total fees (base + royalties)
+6. Calculate total fees (base + chunk retrieval)
          ↓
 7. User pays all fees atomically
          ↓
@@ -327,7 +307,7 @@ Synthesis is a **collaborative research engine** that:
 
 ## Fee Structure
 
-| Depth             | Synthesis Base Fee | Max Query Royalties |
+| Depth             | Synthesis Base Fee | Max Chunk Retrieval |
 | ----------------- | ------------------ | ------------------- |
 | **Quick**         | $0.01              | $0.05               |
 | **Standard**      | $0.02              | $0.10               |
@@ -341,30 +321,30 @@ Sources: 3 creators (alice, bob, carol)
 Depth: standard
 
 Synthesis base: $0.02
-Query royalties:
-  - alice: 15 triples × $0.001 = $0.015
-  - bob: 18 triples × $0.001 = $0.018
-  - carol: 12 triples × $0.001 = $0.012
+Chunk retrieval:
+  - alice: 15 chunks × ~116 tokens avg × ($0.0004 + $0.0008)/1K = ~$0.015
+  - bob: 18 chunks × ~116 tokens avg × ($0.0004 + $0.0012)/1K = ~$0.018
+  - carol: 12 chunks × ~116 tokens avg × ($0.0004 + $0.0008)/1K = ~$0.012
 
 Total: $0.02 + $0.045 = $0.065
-Creator total: $0.036 (80% of $0.045)
+Creator total: ~$0.036 (80% of $0.045)
 ```
 
 ## Citation Format
 
-Each fact in the synthesis includes citation:
+Each finding in the synthesis includes citations:
 
 ```json
 {
-  "fact": "New interpretability techniques emerge in 2024",
+  "finding": "New interpretability techniques emerged in 2024",
   "confidence": 0.92,
   "citations": [
     {
       "creator": "0xcreator...alice",
       "attribution": "@alice",
       "blob_id": "walrus_blob_abc123",
-      "triple_id": "triple_042",
-      "fee_paid": "0.001"
+      "chunk_id": 42,
+      "fee_paid": "0.0001"
     }
   ]
 }
@@ -384,13 +364,13 @@ Each fact in the synthesis includes citation:
 
 | Benefit         | Description                                        |
 | --------------- | -------------------------------------------------- |
-| **New Revenue** | Earn royalties from synthesis queries              |
+| **New Revenue** | Earn royalties from synthesis chunk retrieval      |
 | **Exposure**    | Get featured in research across topics             |
-| **Low Effort**  | Content automatically included (opt-out available) |
-| **Attribution** | Full citation for every fact used                  |
+| **Low Effort**  | Content automatically indexed (opt-out available)  |
+| **Attribution** | Full citation for every chunk used                  |
 
 ## Next Steps
 
-- [Pay-Per-Query API](/pay-per-query) - Individual triple access
+- [Search API](/knowledge-graph) - Explore available search and chunk APIs
+- [Pay-Per-Query API](/pay-per-query) - Per-chunk retrieval pricing
 - [Attribution Ledger](/attribution-ledger) - Track usage attribution
-- [Knowledge Graph](/knowledge-graph) - Explore available triples

@@ -79,7 +79,7 @@ Creators can configure up to 3 membership tiers:
     <CodeGroup title="Request" tag="POST" label="/v1/subscribe">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/subscribe \
+    curl https://api.prod.zing.you/subscribe \
       -H "Authorization: Bearer {jwt_token}" \
       -d creator="0x123...creator" \
       -d tier="premium"
@@ -136,7 +136,7 @@ Creators can configure up to 3 membership tiers:
     <CodeGroup title="Request" tag="GET" label="/v1/memberships">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/memberships \
+    curl https://api.prod.zing.you/memberships \
       -H "Authorization: Bearer {jwt_token}" \
       -d status="active"
     ```
@@ -199,7 +199,7 @@ Creators can configure up to 3 membership tiers:
     <CodeGroup title="Request" tag="GET" label="/v1/creators/0x123.../members">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/creators/0x123.../members \
+    curl https://api.prod.zing.you/creators/0x123.../members \
       -H "Authorization: Bearer {jwt_token}"
     ```
 
@@ -249,7 +249,7 @@ Creators can configure up to 3 membership tiers:
     <CodeGroup title="Request" tag="DELETE" label="/v1/memberships/sub_abc123">
 
     ```bash {{ title: 'cURL' }}
-    curl -X DELETE https://api.zing.protocol/v1/memberships/sub_abc123 \
+    curl -X DELETE https://api.prod.zing.you/memberships/sub_abc123 \
       -H "Authorization: Bearer {jwt_token}"
     ```
 

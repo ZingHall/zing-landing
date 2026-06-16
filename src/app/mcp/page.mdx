@@ -1,0 +1,388 @@
+export const metadata = {
+  title: 'MCP & CLI',
+  description:
+    'Learn about the zing CLI tool and MCP server for paid semantic search and chunk retrieval with AI agent integration.',
+}
+
+# MCP & CLI
+
+The `zing` CLI is a command-line tool for paid semantic search and chunk retrieval on the Zing platform. It executes USDC micro-payments on Sui, queries the Search API, and includes an MCP server for AI agent integration. {{ className: 'lead' }}
+
+## Prerequisites
+
+1. **Rust toolchain** — edition 2021
+2. **Sui CLI** — [install](https://docs.sui.io/) and configure:
+   ```bash
+   sui client  # creates ~/.sui/sui_config/client.yaml
+   ```
+3. **Sui wallet** with USDC balance (≥0.01 USDC) on mainnet
+
+---
+
+## Installation
+
+### Option 1: Install from GitHub
+
+```bash
+cargo install --git https://github.com/ZingHall/zing-cli.git zing-cli
+```
+
+### Option 2: Clone and build
+
+```bash
+git clone https://github.com/ZingHall/zing-cli.git
+cd zing-cli
+cargo install --path . --bin zing
+```
+
+### Verify
+
+```bash
+zing version
+# → zing 0.1.0
+```
+
+If you see a version string, installation succeeded. The binary `zing` is placed in `~/.cargo/bin/`.
+
+---
+
+## Configuration
+
+### How the CLI finds your Sui wallet
+
+The CLI reads from your Sui configuration directory:
+
+```
+~/.sui/sui_config/
+  client.yaml     — active address (created by `sui client`)
+  sui.keystore    — Ed25519 keypair (created by `sui client`)
+```
+
+Override the directory with the `SUI_CONFIG_DIR` environment variable.
+
+### Defaults and overrides
+
+| Variable | Overrides | Default |
+|----------|-----------|---------|
+| `ZING_API_URL` | API base URL | `https://search.zing.services` |
+| `ZING_PLATFORM_USDC_ADDRESS` | Payment recipient | hardcoded platform address |
+| `SUI_CONFIG_DIR` | Sui config path | `~/.sui/sui_config` |
+| `--api` flag | API base URL | overrides env/fallback |
+| `--rpc` flag | Sui fullnode URL | `https://fullnode.mainnet.sui.io:443` |
+
+The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.testnet.sui.io:443`.
+
+---
+
+## Subcommands
+
+### `zing version` {{ tag: 'CLI', label: 'version' }}
+
+<div className="not-prose mb-8">
+  <Row>
+    <Col>
+
+    Show the CLI version.
+
+    </Col>
+    <Col sticky>
+
+    <CodeGroup title="Usage" tag="" label="">
+
+    ```bash {{ title: 'bash' }}
+    zing version
+    # → zing 0.1.0
+    ```
+
+    </CodeGroup>
+
+    </Col>
+  </Row>
+</div>
+
+---
+
+### `zing search <query>` {{ tag: 'CLI', label: 'search' }}
+
+<Row>
+  <Col>
+
+    Paid semantic search across all indexed wikis. Executes a USDC micro-payment on Sui, signs an `ApiAccessMessage`, and queries the Search API. Results are returned up to the paid budget.
+
+    ### Flags
+
+    <Properties>
+      <Property name="--owner" type="string">
+        Filter to a specific creator's wiki.
+      </Property>
+      <Property name="--limit" type="integer">
+        Max results (default: 20, max: 50).
+      </Property>
+      <Property name="--api" type="string">
+        Override API base URL.
+      </Property>
+      <Property name="--rpc" type="string">
+        Override Sui fullnode URL.
+      </Property>
+      <Property name="--json" type="boolean">
+        Output JSON for agent consumption.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Usage" tag="" label="">
+
+    ```bash {{ title: 'Basic search' }}
+    zing search "what is blockchain"
+    ```
+
+    ```bash {{ title: 'Scoped to a wiki' }}
+    zing search "Move language" \
+      --owner 0x1aa2c40369fa0fffb12fe6e1415b8aba52d15cc3cf59e001adc5d2687920fbd6
+    ```
+
+    ```bash {{ title: 'Custom limit' }}
+    zing search "DeFi" --limit 30
+    ```
+
+    ```bash {{ title: 'JSON output' }}
+    zing search "Sui gas" --json
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+### `zing chunks <query>` {{ tag: 'CLI', label: 'chunks' }}
+
+<Row>
+  <Col>
+
+    Paid chunk retrieval with full content text. Same payment flow as search but returns chunk-level data with scores, content types, and truncation metadata.
+
+    ### Flags
+
+    <Properties>
+      <Property name="--owner" type="string">
+        Filter to a specific creator's wiki.
+      </Property>
+      <Property name="--limit" type="integer">
+        Max results (default: 20, max: 50).
+      </Property>
+      <Property name="--api" type="string">
+        Override API base URL.
+      </Property>
+      <Property name="--rpc" type="string">
+        Override Sui fullnode URL.
+      </Property>
+      <Property name="--json" type="boolean">
+        Output JSON for agent consumption.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Usage" tag="" label="">
+
+    ```bash {{ title: 'Basic chunks' }}
+    zing chunks "zero-knowledge proofs"
+    ```
+
+    ```bash {{ title: 'Scoped with limit' }}
+    zing chunks "consensus" --owner 0xabc... --limit 20
+    ```
+
+    ```bash {{ title: 'JSON output' }}
+    zing chunks "smart contracts" --json
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+### `zing client` {{ tag: 'CLI', label: 'client' }}
+
+<Row>
+  <Col>
+
+    Sui wallet utilities for inspecting address and balances.
+
+    ### Subcommands
+
+    <Properties>
+      <Property name="active-address" type="subcommand">
+        Show the active Sui address.
+      </Property>
+      <Property name="balance" type="subcommand">
+        Show SUI and USDC balances.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Usage" tag="" label="">
+
+    ```bash {{ title: 'Active address' }}
+    zing client active-address
+    # → 0x1aa2c40369fa0fffb12fe6e1415b8aba52d15cc3cf59e001adc5d2687920fbd6
+    ```
+
+    ```bash {{ title: 'Balances' }}
+    zing client balance
+    # → SUI: 1.5 SUI
+    # → USDC: 50.00 USDC
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+### `zing mcp serve` {{ tag: 'CLI', label: 'mcp serve' }}
+
+<Row>
+  <Col>
+
+    Start an MCP server on stdio for AI agent integration. Provides two MCP tools:
+
+    <Properties>
+      <Property name="zing_search" type="tool">
+        Triage/search — finds relevant articles by query, returns titles, excerpts, scores, and metadata. Use for discovery and survey queries.
+      </Property>
+      <Property name="zing_chunks" type="tool">
+        Deep content retrieval — returns full chunk text with scores, content types, and truncation info. Use when you need the actual content to answer a question.
+      </Property>
+    </Properties>
+
+    Connect any MCP-compatible client (Claude Desktop, Cursor, VS Code) by running `zing mcp serve` as a subprocess.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Usage" tag="" label="">
+
+    ```bash {{ title: 'Start MCP server' }}
+    zing mcp serve
+    # MCP server listening on stdio...
+    ```
+
+    ```json {{ title: 'Claude Desktop config' }}
+    {
+      "mcpServers": {
+        "zing": {
+          "command": "zing",
+          "args": ["mcp", "serve"]
+        }
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## JSON Output (Agent Consumption)
+
+The `--json` flag returns structured JSON instead of human-readable output. This is designed for machine consumption in AI agent workflows.
+
+### Search response
+
+```bash
+zing search "Sui gas mechanism" --json
+```
+
+```json
+{
+  "results": [
+    {
+      "article_id": "0xabc...",
+      "title": "Gas Fees",
+      "excerpt": "When you submit transactions...",
+      "score": 0.81,
+      "token_count": 4200,
+      "recency_days": 0,
+      "tags": ["finance", "cryptocurrency"]
+    }
+  ],
+  "budget": {
+    "paid_usdc": 10000,
+    "consumed_usdc": 1250,
+    "remaining_usdc": 8750
+  }
+}
+```
+
+---
+
+## Payment Flow
+
+Each request costs the flat search fee (default 0.0005 USDC for ≤20 results, scales linearly for larger limits) plus per-result token fees:
+
+```
+1. Send USDC — CLI sends USDC to the platform address via
+   0x2::balance::send_funds<USDC>
+   Auto-consolidates coins if balance is fragmented.
+
+2. Sign message — BCS-encodes ApiAccessMessage {q, wiki,
+   transaction_digest, timestamp} and signs as a PersonalMessage
+   with the Ed25519 keypair from sui.keystore.
+
+3. Submit — sends signed request to the Search API. Server
+   verifies on-chain payment, runs search pipeline, returns
+   results up to the paid budget.
+```
+
+The budget breakdown is displayed in the output:
+
+```
+Budget: paid=10000, consumed=1250, remaining=8750
+```
+
+---
+
+## Project Structure
+
+```
+zing-cli/
+  Cargo.toml        — workspace root
+  src/
+    main.rs         — CLI entry: clap subcommands, output formatting
+    lib.rs          — module declarations
+    config.rs       — reads Sui client.yaml + env vars
+    error.rs        — typed error codes
+    keystore.rs     — loads Ed25519 keypair from sui.keystore
+    sui.rs          — USDC balance check + payment PTB builder
+    api.rs          — ApiAccessMessage signing + HTTP calls
+    models.rs       — request/response types (serde)
+    mcp.rs          — MCP server (zing_search, zing_chunks tools)
+  eval/             — zing-eval RAG evaluation framework
+    src/
+      main.rs       — eval CLI (run, list, formula)
+      checks.rs     — L1 retrieval / L2 score sanity
+      golden.rs     — YAML query loader
+      runner.rs     — API client for chunk/search estimate
+      l3_eval.rs    — LLM judge (opt-in)
+      report.rs     — JSON report writer
+    queries/        — golden query YAML definitions
+```
+
+## Next Steps
+
+- [Search API](/knowledge-graph) - Explore the search and chunk API endpoints
+- [Pay-Per-Query API](/pay-per-query) - Learn about per-chunk token-based pricing
+- [Synthesis](/synthesis) - Multi-source collaborative research engine

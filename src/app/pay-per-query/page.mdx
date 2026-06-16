@@ -1,84 +1,136 @@
 export const metadata = {
   title: 'Pay-Per-Query API',
   description:
-    'Learn how the Pay-Per-Query system enables micro-transactions for AI agents accessing creator knowledge.',
+    'Learn how the Pay-Per-Query system enables token-based micropayments for AI agents accessing indexed content chunks.',
 }
 
 # Pay-Per-Query API
 
-The Pay-Per-Query (PPQ) system enables AI agents and researchers to pay micro-fees for accessing specific Knowledge Graph triples. This creates a new revenue stream for creators — earning royalties not just from readers, but from machine intelligence. {{ className: 'lead' }}
-
-<Note>
-  **Status**: Pay-Per-Query is currently in development. The API endpoints below
-  represent the planned implementation.
-</Note>
+The Pay-Per-Query (PPQ) system enables AI agents and researchers to pay micro-fees for accessing specific content chunks from the search index. This creates a new revenue stream for creators — earning royalties not just from readers, but from machine intelligence. {{ className: 'lead' }}
 
 ## What is Pay-Per-Query?
 
-Pay-Per-Query is a micro-transaction model where users pay a **fractional fee** for each specific piece of data retrieved by an AI:
+Pay-Per-Query is a micro-transaction model where users pay a **token-based fee** for each chunk of content retrieved by an AI:
 
 - Traditional Content: Pay $X/month for all content
-- Pay-Per-Query: Pay $0.001 per specific fact/triple accessed
+- Pay-Per-Query: Pay per chunk based on token count ($0.0004/1K tokens + creator rate)
 
 This is particularly valuable for:
 
 - **AI Agents** - Pay only for data they actually use
-- **Researchers** - Access specific facts without full memberships
-- **Developers** - Build applications on creator knowledge
+- **Researchers** - Access specific content without full memberships
+- **Developers** - Build applications on creator content
 
-## The Inseparability Principle
+## How It Works
 
-Every data blob stored on Walrus is cryptographically bound to a **Sui payment intent**. Access to the raw data by an AI agent is programmatically impossible without the execution of a Pay-Per-Query transaction.
+Content is chunked at indexing time (~200 tokens per chunk). Each query retrieves chunks ranked by relevance, and you pay only for what you retrieve:
 
-## Initiate Query {{ tag: 'POST', label: '/v1/ppq/initiate' }}
+```
+User Query → Vector + Lexical Search → RRF Merge → Cross-encoder Rerank
+    │
+    ▼
+Top-K Chunks (ranked by blended score)
+    │
+    ▼
+Budget-based greedy accumulation (highest score first)
+    │
+    ▼
+Payment: flat_fee + Σ(token_based_chunk_fees)
+    │
+    ▼
+Results returned with budget breakdown
+```
+
+## Retrieve Chunks (Paid) {{ tag: 'POST', label: '/chunks' }}
 
 <Row>
   <Col>
 
-    Initiate a Pay-Per-Query transaction. Creates a payment intent and returns the amount to pay.
+    Initiate and execute a chunk retrieval. The request includes a signed `ApiAccessMessage` and an on-chain USDC payment. Results are returned greedily within budget.
 
     ### Required attributes
 
     <Properties>
-      <Property name="triple_ids" type="array">
-        Array of triple IDs to query.
+      <Property name="q" type="string">
+        Search query.
       </Property>
-      <Property name="purpose" type="string">
-        Description of how the data will be used.
+      <Property name="wiki" type="string">
+        `global` or owner address.
+      </Property>
+      <Property name="limit" type="integer">
+        Max chunks to retrieve (capped at 50).
+      </Property>
+      <Property name="transaction_digest" type="string">
+        Sui transaction digest for payment verification.
+      </Property>
+      <Property name="signature" type="string">
+        Base64-encoded Sui wallet signature.
+      </Property>
+      <Property name="bytes" type="string">
+        Base64-encoded BCS `ApiAccessMessage`.
       </Property>
     </Properties>
 
-    ### Returns
+    ### Optional attributes
 
-    - Payment intent with exact fee amount
-    - Creator address for the payment
-    - Expiration time for the intent
+    <Properties>
+      <Property name="expand" type="boolean">
+        When `true`, returns full `chunk_text` instead of excerpt (no extra charge).
+      </Property>
+      <Property name="article_ids" type="array">
+        Filter to specific article IDs.
+      </Property>
+    </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/v1/ppq/initiate">
+    <CodeGroup title="Request" tag="POST" label="/chunks">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/ppq/initiate \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d triple_ids='["triple_001", "triple_002"]' \
-      -d purpose="research"
-    ```
-
-    ```js
-    const intent = await client.ppq.initiate({
-      tripleIds: ['triple_001', 'triple_002'],
-      purpose: 'research',
-    });
+    curl -X POST https://search.zing.services/chunks \
+      -H "Content-Type: application/json" \
+      -d '{
+        "q": "what is DeFi?",
+        "wiki": "global",
+        "limit": 10,
+        "expand": false,
+        "transaction_digest": "0xabc...",
+        "signature": "sig...",
+        "bytes": "bcs..."
+      }'
     ```
 
     ```json {{ title: 'Response' }}
     {
-      "intent_id": "intent_abc123",
-      "total_fee": "0.002",
-      "expires_at": 1709316000,
-      "status": "pending"
+      "query_text": "what is DeFi?",
+      "wiki_scope": "global",
+      "chunks": [
+        {
+          "chunk_id": 94,
+          "article_id": "0xf6bd...",
+          "title": "What is DeFi?",
+          "heading_path": ["Introduction"],
+          "chunk_token_count": 116,
+          "scores": {
+            "document": 1.40,
+            "passage": 3.25,
+            "blended": 2.14
+          },
+          "text": "DeFi is a new paradigm for financial services...",
+          "content_type": "prose",
+          "truncated": null
+        }
+      ],
+      "budget": {
+        "paid_usdc": "0.010000",
+        "consumed_usdc": "0.000797",
+        "remaining_usdc": "0.009203",
+        "platform_fee_usdc": "0.000743",
+        "creators_fee_usdc": "0.000054",
+        "items_returned": 5
+      },
+      "total_tokens": 580
     }
     ```
 
@@ -87,50 +139,70 @@ Every data blob stored on Walrus is cryptographically bound to a **Sui payment i
   </Col>
 </Row>
 
-## Execute Query {{ tag: 'POST', label: '/v1/ppq/execute' }}
+---
+
+## Expand Chunks {{ tag: 'POST', label: '/chunk/expand' }}
 
 <Row>
   <Col>
 
-    Execute the Pay-Per-Query payment and receive the triple data.
+    Retrieve full untruncated text for up to 20 chunks. Requires a signed `ExpandAccessMessage` and USDC payment. Chunks returned greedily within budget.
 
     ### Required attributes
 
     <Properties>
-      <Property name="intent_id" type="string">
-        The payment intent ID from initiate.
+      <Property name="chunk_ids" type="array">
+        Chunk IDs to expand (max 20).
+      </Property>
+      <Property name="transaction_digest" type="string">
+        Sui transaction digest.
+      </Property>
+      <Property name="signature" type="string">
+        Base64-encoded signature.
+      </Property>
+      <Property name="bytes" type="string">
+        Base64-encoded BCS `ExpandAccessMessage`.
       </Property>
     </Properties>
-
-    ### How it works
-
-    1. Verify USDC balance
-    2. Execute Sui transaction for payment
-    3. Atomic unlock of triple data
-    4. Return decrypted content
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/v1/ppq/execute">
+    <CodeGroup title="Request" tag="POST" label="/chunk/expand">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/ppq/execute \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d intent_id="intent_abc123"
-    ```
-
-    ```js
-    const result = await client.ppq.execute({
-      intentId: 'intent_abc123',
-    });
+    curl -X POST https://search.zing.services/chunk/expand \
+      -H "Content-Type: application/json" \
+      -d '{
+        "chunk_ids": [1603, 94, 1802],
+        "transaction_digest": "5KzN...",
+        "signature": "AM3x...",
+        "bytes": "BQAAAGNo..."
+      }'
     ```
 
     ```json {{ title: 'Response' }}
     {
-      "success": true,
-      "tx_hash": "0xsui...tx_hash",
-      "triples": [...]
+      "chunks": [
+        {
+          "chunk_id": 1603,
+          "article_id": "0xb195...",
+          "owner_address": "0x1aa2...",
+          "chunk_text": "| Provider | Can support? | ... |\n(all rows)",
+          "content_type": "table",
+          "token_count": 88,
+          "truncated": {
+            "content_type": "table",
+            "table_rows_total": 15,
+            "table_rows_shown": 3
+          }
+        }
+      ],
+      "budget": {
+        "paid_usdc": "1.000000",
+        "consumed_usdc": "0.002320",
+        "remaining_usdc": "0.997680"
+      }
     }
     ```
 
@@ -138,40 +210,99 @@ Every data blob stored on Walrus is cryptographically bound to a **Sui payment i
 
   </Col>
 </Row>
+
+---
 
 ## Fee Structure
 
-| Query Type         | Fee          | Creator Share |
-| ------------------ | ------------ | ------------- |
-| Single triple      | $0.001       | 80% ($0.0008) |
-| Bulk (10+ triples) | $0.0008 each | 80%           |
+### Cost Formula
+
+```
+flat_fee = $0.0005 (limit ≤ 20, scales linearly for larger limits)
+base_fee = chunk_tokens / 1000 × $0.0004
+content_fee = chunk_tokens / 1000 × creator_rate (0 if subscribed)
+item_cost = base_fee + content_fee
+total_consumed = flat_fee + sum(item_costs)
+```
 
 ### Revenue Split
 
-| Party             | Share |
-| ----------------- | ----- |
-| **Creator**       | 80%   |
-| **Zing Protocol** | 20%   |
+| Party             | Share         |
+| ----------------- | ------------- |
+| **Creator**       | 80% of content_fee + 0% of base_fee |
+| **Platform**      | flat_fee + base_fee + 20% of content_fee |
+
+### Creator Fee Levels
+
+Creators set per-level content fees (levels 0–2). Default: 800 micro-USDC per 1K tokens ($0.0008). Range: 100–2000 ($0.0001–$0.002).
+
+### Budget Model
+
+Chunks are returned **greedily within budget** — highest blended score first. Any unused payment stays on the platform as credit (`remaining_usdc`). Items below the `0.15` relevance threshold are excluded before budget calculation.
+
+### Example Calculation
+
+```
+Query: "latest DeFi trends"
+Budget sent: $0.01 USDC
+
+Flat fee: $0.0005
+Chunk 1: 116 tokens × ($0.0004 + $0.0008)/1K = $0.000139 → blended_score: 2.14 ✓
+Chunk 2: 88 tokens × ($0.0004 + $0.0012)/1K = $0.000141 → blended_score: 1.85 ✓
+Chunk 3: 200 tokens × ($0.0004 + $0.0008)/1K = $0.000240 → blended_score: 1.62 ✓
+...
+
+Total consumed: $0.000797
+Remaining: $0.009203
+```
+
+## Payment Flow
+
+```
+Client
+  │
+  ▼
+Sign ApiAccessMessage + send USDC to Platform
+  │
+  ▼
+POST /chunks with signature + transaction_digest
+  │
+  ▼
+Server verifies signature + on-chain payment
+  │
+  ▼
+Runs search pipeline (vector + lexical + cross-encoder)
+  │
+  ▼
+Calculates per-chunk cost based on token_count × rates
+  │
+  ▼
+Greedily accumulates chunks within budget (highest score first)
+  │
+  ▼
+Records payment + creator earnings in DB
+  │
+  ▼
+Returns chunks + budget breakdown
+```
 
 ## Security Features
 
 <Note>
-  **Cryptographic Binding**: Each Walrus blob is bound to a payment intent.
-  Without payment, the blob cannot be decrypted.
+  **Cryptographic Binding**: Each API call is cryptographically bound to a Sui transaction via signature verification. Without valid payment, chunks are not returned.
 </Note>
 
 <Note>
-  **Attribution**: All queries are recorded in the Attribution Ledger for
-  creator transparency.
+  **Attribution**: All queries are recorded in the Attribution Ledger for creator transparency and royalty tracking.
 </Note>
 
 <Note>
-  **Atomic Transactions**: Payment and data unlock happen in a single Sui
-  transaction.
+  **Settlement**: Creator earnings are settled via a background scheduler that batch-payouts accumulated balances every 5 minutes.
 </Note>
 
 ## Next Steps
 
+- [Search API](/knowledge-graph) - Explore the search and chunk APIs
+- [MCP & CLI](/mcp) - CLI tool and MCP server for AI agents
 - [Attribution Ledger](/attribution-ledger) - Track AI usage attribution
-- [Knowledge Graph](/knowledge-graph) - Explore the knowledge triples
 - [Synthesis](/synthesis) - Multi-source collaborative research

@@ -252,12 +252,13 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: 'Knowledge Marketplace',
+    title: 'Search & Retrieval',
     links: [
-      { title: 'Knowledge Graph', href: '/knowledge-graph' },
+      { title: 'Search API', href: '/knowledge-graph' },
       { title: 'Pay-Per-Query API', href: '/pay-per-query' },
       { title: 'Attribution Ledger', href: '/attribution-ledger' },
       { title: 'Synthesis', href: '/synthesis' },
+      { title: 'MCP & CLI', href: '/mcp' },
     ],
   },
   {

@@ -6,19 +6,16 @@ export const metadata = {
 
 # Attribution Ledger
 
-The Attribution Ledger is an immutable record on Sui that links AI outputs back to specific Walrus Blob IDs. This ensures creators are properly credited whenever their content is used by AI agents. {{ className: 'lead' }}
-
-<Note>
-  **Status**: Attribution Ledger is currently in development. The API endpoints
-  below represent the planned implementation.
-</Note>
+The Attribution Ledger is an immutable record on Sui that links AI outputs back to specific Walrus Blob IDs and content chunks. This ensures creators are properly credited whenever their content is used by AI agents. {{ className: 'lead' }}
 
 ## Overview
 
-Every time an AI agent queries and uses content from the Knowledge Graph, an immutable record is created:
+Every time an AI agent queries and uses content from the search index, an immutable record is created:
 
 ```
-AI Output → Attribution Ledger → Source Walrus Blob → Creator
+AI Query → Search Index → Content Chunks → Creator
+     ↓
+Attribution Ledger → Source Walrus Blob → Royalty Tracking
      ↓
 Immutable record ensures:
 - Creator gets credited
@@ -35,10 +32,10 @@ Immutable record ensures:
     Unique identifier for the attribution record.
   </Property>
   <Property name="query_id" type="string">
-    The Pay-Per-Query transaction ID.
+    The search/chunk query transaction ID.
   </Property>
-  <Property name="triple_id" type="string">
-    The knowledge triple that was accessed.
+  <Property name="chunk_id" type="integer">
+    The content chunk that was accessed.
   </Property>
   <Property name="blob_id" type="string">
     The source Walrus blob ID.
@@ -62,39 +59,34 @@ Immutable record ensures:
 
 ---
 
-## Query Attribution History {{ tag: 'GET', label: '/v1/attribution/creator' }}
+## Get Creator Attributions {{ tag: 'GET', label: '/attributions/creator' }}
 
 <Row>
   <Col>
 
-    Get attribution records for a creator (as creator).
+    Get attribution records for a creator.
 
     ### Query parameters
 
     <Properties>
-      <Property name="start_date" type="timestamp">
-        Filter records from this date.
-      </Property>
-      <Property name="end_date" type="timestamp">
-        Filter records until this date.
+      <Property name="owner_address" type="string">
+        Creator's Sui address.
       </Property>
       <Property name="limit" type="integer">
-        Number of results (default: 10).
+        Number of results (default: 50).
+      </Property>
+      <Property name="offset" type="integer">
+        Pagination offset (default: 0).
       </Property>
     </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/attribution/creator">
+    <CodeGroup title="Request" tag="GET" label="/attributions/creator">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/attribution/creator \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const records = await client.attribution.forCreator();
+    curl "https://search.zing.services/attributions/creator?owner_address=0xcreator...alice&limit=20"
     ```
 
     ```json {{ title: 'Response' }}
@@ -104,21 +96,21 @@ Immutable record ensures:
         {
           "id": "attr_001",
           "query_id": "intent_abc123",
-          "triple_id": "triple_001",
+          "chunk_id": 94,
           "blob_id": "walrus_blob_abc123",
           "query_creator": "0xagent...xyz",
           "usage_purpose": "research_for_article",
-          "fee_paid": "0.001",
+          "fee_paid": "0.0001",
           "created_at": 1709312400
         },
         {
           "id": "attr_002",
           "query_id": "intent_xyz789",
-          "triple_id": "triple_042",
+          "chunk_id": 1603,
           "blob_id": "walrus_blob_def456",
           "query_creator": "0xagent...pqr",
           "usage_purpose": "training_data_collection",
-          "fee_paid": "0.001",
+          "fee_paid": "0.0001",
           "created_at": 1709226000
         }
       ],
@@ -126,7 +118,7 @@ Immutable record ensures:
       "total_fees_earned": "1.25",
       "query_stats": {
         "unique_agents": 45,
-        "total_triples_accessed": 3200
+        "total_chunks_accessed": 3200
       }
     }
     ```
@@ -138,53 +130,28 @@ Immutable record ensures:
 
 ---
 
-## Get Attribution Stats {{ tag: 'GET', label: '/v1/attribution/stats' }}
+## Get Article Attributions {{ tag: 'GET', label: '/attributions/article' }}
 
 <Row>
   <Col>
 
-    Get aggregated attribution statistics for the authenticated creator.
+    Get payment attributions for a specific article.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="article_id" type="string">
+        The article address.
+      </Property>
+    </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/attribution/stats">
+    <CodeGroup title="Request" tag="GET" label="/attributions/article">
 
     ```bash {{ title: 'cURL' }}
-    curl https://api.zing.protocol/v1/attribution/stats \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const stats = await client.attribution.getStats();
-    ```
-
-    ```json {{ title: 'Response' }}
-    {
-      "creator": "0xcreator...alice",
-      "period": "all_time",
-      "total_attributions": 1250,
-      "total_fees_earned": "1.25",
-      "by_purpose": {
-        "research_for_article": 450,
-        "training_data": 300,
-        "verification": 200,
-        "other": 300
-      },
-      "by_agent": {
-        "0xagent...xyz": 500,
-        "0xagent...abc": 350,
-        "0xagent...pqr": 400
-      },
-      "top_content": [
-        {
-          "blob_id": "walrus_blob_abc123",
-          "title": "Understanding AI",
-          "attributions": 85,
-          "fees": "0.085"
-        }
-      ]
-    }
+    curl "https://search.zing.services/attributions/article?article_id=0x8a0f..."
     ```
 
     </CodeGroup>
@@ -194,54 +161,33 @@ Immutable record ensures:
 
 ---
 
-## Verify Attribution {{ tag: 'GET', label: '/v1/attribution/verify' }}
+## Attribution Stats {{ tag: 'GET', label: '/attributions/article/stats' }}
 
 <Row>
   <Col>
 
-    Verify if content was properly attributed. Used to check if usage was recorded.
-
-    ### Query parameters
-
-    <Properties>
-      <Property name="blob_id" type="string">
-        The Walrus blob ID to verify.
-      </Property>
-      <Property name="query_id" type="string">
-        Optional specific query ID to check.
-      </Property>
-    </Properties>
+    Get aggregated attribution statistics across all articles.
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/v1/attribution/verify">
+    <CodeGroup title="Request" tag="GET" label="/attributions/article/stats">
 
     ```bash {{ title: 'cURL' }}
-    curl "https://api.zing.protocol/v1/attribution/verify?blob_id=walrus_blob_abc123" \
-      -H "Authorization: Bearer {jwt_token}"
-    ```
-
-    ```js
-    const verified = await client.attribution.verify({
-      blobId: 'walrus_blob_abc123',
-    });
+    curl https://search.zing.services/attributions/article/stats
     ```
 
     ```json {{ title: 'Response' }}
     {
-      "blob_id": "walrus_blob_abc123",
-      "verified": true,
-      "attribution_count": 12,
-      "total_fees_paid": "0.012",
-      "recent_attributions": [
-        {
-          "query_creator": "0xagent...xyz",
-          "purpose": "research_for_article",
-          "fee": "0.001",
-          "timestamp": 1709312400
-        }
-      ]
+      "period": "all_time",
+      "total_attributions": 12500,
+      "total_fees": "12.50",
+      "by_purpose": {
+        "research_for_article": 4500,
+        "training_data": 3000,
+        "verification": 2000,
+        "other": 3000
+      }
     }
     ```
 
@@ -255,16 +201,16 @@ Immutable record ensures:
 ## How Attribution Works
 
 ```
-1. AI Agent initiates query
+1. AI Agent initiates search or chunk query
          ↓
-2. Triple data unlocked via PPQ
+2. Content chunks retrieved via search API
          ↓
 3. Attribution record created atomically:
    ┌────────────────────────────────────────┐
    │  ON-CHAIN ATTRIBUTION RECORD            │
    │                                         │
-   │  triple_id → blob_id → creator         │
-   │  query_id → query_creator              │
+   │  chunk_id → article_id → blob_id       │
+   │  creator → query_creator               │
    │  purpose → fee_paid → timestamp       │
    └────────────────────────────────────────┘
          ↓
@@ -283,25 +229,48 @@ Creators can view:
 | ---------------------- | ----------------------------------- |
 | **Total Attributions** | Number of times content was queried |
 | **Unique Agents**      | Number of different AI agents       |
-| **Fees Earned**        | Total PPQ fees from attribution     |
+| **Fees Earned**        | Total fees from AI attribution      |
 | **Top Content**        | Most frequently accessed articles   |
 | **Usage by Purpose**   | Breakdown of how content is used    |
 
-## Royalty Tracking
+## Earnings
 
-Attribution records feed into the royalty system:
+Attribution records feed into the creator earnings system:
+
+### `GET /earnings/summary`
+
+```
+curl "https://search.zing.services/earnings/summary?owner_address=0x1aa2..."
+
+{
+  "owner_address": "0x1aa2...",
+  "total_earned_usdc": 150000,
+  "total_attributions": 25,
+  "last_settled_at": null
+}
+```
+
+### `GET /earnings/monthly`
+
+Get earnings aggregated by calendar month, with gross/net breakdown and platform fee deduction.
+
+### `GET /earnings/articles`
+
+Get earnings broken down by article, ordered by total descending. Each entry shows `article_id`, `title`, `total_usdc`, `query_count`, and `last_queried` timestamp.
+
+## Royalty Tracking
 
 ```typescript
 // Creator royalty calculation
 const royalties = {
   membership_fees: '500.00', // From memberships
   donation_fees: '50.00', // From donations
-  ppq_royalties: '1.25', // From AI attribution
+  search_royalties: '1.25', // From AI search attribution
   total: '551.25',
 }
 
-// 80% to creator, 20% platform
-const creator_share = parseFloat(royalties.ppq_royalties) * 0.8 // $1.00
+// Platform share: 10% (configurable)
+const creator_share = parseFloat(royalties.search_royalties) * 0.9
 ```
 
 ## Benefits
@@ -311,33 +280,24 @@ const creator_share = parseFloat(royalties.ppq_royalties) * 0.8 // $1.00
 | Transparent usage tracking  | Compliant data access      |
 | Royalties from AI usage     | Clear attribution records  |
 | Insight into content value  | Audit trail for outputs    |
-| Control over data licensing | Direct payment to creators |
+| Control over search opt-in  | Direct payment to creators |
 
 ## Compliance
 
 <Note>
-  **Creator Consent**: Content on Zing Protocol is opt-in for Knowledge Graph
-  inclusion. Creators choose which content to expose.
+  **Creator Consent**: Content on Zing Protocol is opt-in for search indexing. Creators toggle search visibility via `PUT /chunk/config/enabled`.
 </Note>
 
 <Note>
-  **Immutable Records**: Attribution records cannot be altered or deleted,
-  ensuring long-term auditability.
+  **Immutable Records**: Attribution records cannot be altered or deleted, ensuring long-term auditability.
 </Note>
 
 <Note>
-  **Transparent Fees**: All PPQ fees are tracked and traceable to specific
-  content access.
+  **Transparent Fees**: All query fees are tracked and traceable to specific content chunks.
 </Note>
-
-## Future Features
-
-- **Attestation API** - AI agents can request usage attestations
-- **License Integration** - Different license types per content
-- **Cross-Platform Attribution** - Track usage across platforms
 
 ## Next Steps
 
-- [Pay-Per-Query API](/pay-per-query) - Access Knowledge Graph data
-- [Knowledge Graph](/knowledge-graph) - Explore knowledge triples
+- [Search API](/knowledge-graph) - Explore search and chunk APIs
+- [Pay-Per-Query API](/pay-per-query) - Per-chunk retrieval pricing
 - [Synthesis](/synthesis) - Multi-source collaborative research

@@ -70,9 +70,9 @@ const resources: Array<Resource> = [
   },
   {
     href: '/knowledge-graph',
-    name: 'Knowledge Graph',
+    name: 'Search API',
     description:
-      'Extract RDF triples for AI agent queries and semantic search.',
+      'Hybrid vector + lexical search with cross-encoder reranking for AI agent queries.',
     icon: CogIcon,
     pattern: {
       y: 22,
