@@ -88,8 +88,8 @@ The article model contains all information about published content:
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/articles \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d title="My First Article" \
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d title="My First Article" \
       -d content="# Hello World..." \
       -d access_tier="premium"
     ```
@@ -153,8 +153,8 @@ The article model contains all information about published content:
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/articles \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d limit=10
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d limit=10
     ```
 
     ```js
@@ -211,7 +211,8 @@ The article model contains all information about published content:
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/articles/walrus_blob_abc123 \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -284,8 +285,8 @@ The article model contains all information about published content:
 
     ```bash {{ title: 'cURL' }}
     curl -X PUT https://api.prod.zing.you/articles/walrus_blob_abc123 \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d title="Updated Title" \
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d title="Updated Title" \
       -d access_tier="ultra"
     ```
 
@@ -317,7 +318,8 @@ The article model contains all information about published content:
 
     ```bash {{ title: 'cURL' }}
     curl -X DELETE https://api.prod.zing.you/articles/walrus_blob_abc123 \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -345,7 +347,8 @@ The article model contains all information about published content:
 
     ```bash {{ title: 'cURL' }}
     curl -X POST https://api.prod.zing.you/articles/walrus_blob_abc123/like \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js

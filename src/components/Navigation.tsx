@@ -238,8 +238,6 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'Introduction', href: '/' },
       { title: 'Quickstart', href: '/quickstart' },
-      { title: 'Authentication', href: '/authentication' },
-      { title: 'Platform Architecture', href: '/platform-architecture' },
     ],
   },
   {

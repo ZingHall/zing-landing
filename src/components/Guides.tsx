@@ -8,16 +8,6 @@ const guides = [
     description: 'Get started with Zing Protocol in minutes.',
   },
   {
-    href: '/authentication',
-    name: 'Authentication',
-    description: 'Learn how zkLogin enables Web2-style auth.',
-  },
-  {
-    href: '/platform-architecture',
-    name: 'Architecture',
-    description: 'Understand the Sui, Walrus, and SEAL stack.',
-  },
-  {
     href: '/wallet',
     name: 'Wallet & Payments',
     description: 'Manage USDC for memberships and donations.',

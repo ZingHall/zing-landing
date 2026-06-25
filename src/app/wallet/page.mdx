@@ -46,7 +46,8 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/wallet/balance \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -103,8 +104,8 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/wallet/topup \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d amount="50.00"
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d amount="50.00"
     ```
 
     ```js
@@ -160,8 +161,8 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/wallet/payout \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d amount="25.00" \
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d amount="25.00" \
       -d destination="0xexternal...wallet"
     ```
 
@@ -218,8 +219,8 @@ The Zing Protocol wallet manages your USDC balance for all platform transactions
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/wallet/transactions \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d limit=10
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d limit=10
     ```
 
     ```js
@@ -361,4 +362,3 @@ Confirmation shown with tx hash
 
 - [Memberships](/memberships) - Subscribe to creators
 - [Donations](/donations) - Support your favorite creators
-- [Earnings](/earnings) - View your complete financial dashboard

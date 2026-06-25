@@ -77,8 +77,8 @@ Donations allow supporters to send one-time USDC payments to creators as a way t
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/donate \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d creator="0x123...creator" \
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d creator="0x123...creator" \
       -d amount="5.00" \
       -d message="Love your work!"
     ```
@@ -143,7 +143,8 @@ Donations allow supporters to send one-time USDC payments to creators as a way t
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/creators/0x123.../donations \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -205,7 +206,8 @@ Donations allow supporters to send one-time USDC payments to creators as a way t
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/donations \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -305,4 +307,3 @@ const donationCount = donations.length
 
 - [Wallet](/wallet) - Manage your USDC balance
 - [Memberships](/memberships) - Set up recurring revenue
-- [Earnings](/earnings) - View your complete revenue dashboard

@@ -80,8 +80,8 @@ Creators can configure up to 3 membership tiers:
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/subscribe \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d creator="0x123...creator" \
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d creator="0x123...creator" \
       -d tier="premium"
     ```
 
@@ -137,8 +137,8 @@ Creators can configure up to 3 membership tiers:
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/memberships \
-      -H "Authorization: Bearer {jwt_token}" \
-      -d status="active"
+      -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}" \      -d status="active"
     ```
 
     ```js
@@ -200,7 +200,8 @@ Creators can configure up to 3 membership tiers:
 
     ```bash {{ title: 'cURL' }}
     curl https://api.prod.zing.you/creators/0x123.../members \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -250,7 +251,8 @@ Creators can configure up to 3 membership tiers:
 
     ```bash {{ title: 'cURL' }}
     curl -X DELETE https://api.prod.zing.you/memberships/sub_abc123 \
-      -H "Authorization: Bearer {jwt_token}"
+      -H "x-signature: {base64_signature}" \
+      -H "x-message-bytes: {base64_message}"
     ```
 
     ```js
@@ -340,4 +342,3 @@ const hasAccess =
 
 - [Donations](/donations) - Enable one-time donations
 - [Wallet](/wallet) - Manage your USDC balance
-- [Referral](/referral) - Earn commission by referring creators

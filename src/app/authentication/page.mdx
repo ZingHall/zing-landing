@@ -153,14 +153,36 @@ interface ZkLoginSession {
 
 ## Using the API
 
-When making API requests, authentication is handled automatically:
+When making API requests to the Zing API, authentication uses your Sui wallet signature:
 
 ```bash
-# All API requests include the JWT from zkLogin
+# API calls are authenticated with your Sui wallet signature
 curl https://api.prod.zing.you/articles \
-  -H "Authorization: Bearer {jwt_token}"
+  -H "x-signature: {base64_signature}" \
+  -H "x-message-bytes: {base64_message}"
 
-# The backend validates the JWT and extracts the Sui address
+# The server verifies the signature and extracts your wallet address
+```
+
+For the Search API, paid access uses a signed `ApiAccessMessage`:
+
+```bash
+curl -X POST https://search.zing.services/chunks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "q": "search query",
+    "wiki": "global",
+    "signature": "{base64_signature}",
+    "bytes": "{base64_bcs_message}",
+    "transaction_digest": "{sui_tx_hash}"
+  }'
+```
+
+For internal app access (free endpoints), use the app key:
+
+```bash
+curl "https://search.zing.services/search?q=query" \
+  -H "X-App-Key: $APP_API_KEY"
 ```
 
 ## Integration with SDKs

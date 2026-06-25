@@ -60,7 +60,7 @@ await login('google') // Triggers Google OAuth
 
 ### Walrus Protocol Storage
 
-Content is stored on Walrus, a decentralized storage system on Sui. Each blob is identified by a unique ID.
+Content is stored on Walrus, a decentralized storage system on Sui. Each blob is identified by a unique ID. Content is automatically chunked, embedded, and indexed into the hybrid search pipeline when published.
 
 ```typescript
 // Storage cost calculation
@@ -167,6 +167,30 @@ Grant Access → Decryption Key Provided → Content Accessible
   features.
 </Note>
 
+## Pages & Features
+
+The Zing web app provides creators and readers with the following pages:
+
+| Page | Features |
+|------|----------|
+| **Home** | Tag sphere for browsing related articles by topic. Search bar with semantic + keyword search (Google-like). Content feed. |
+| **Explore Creators** | Discover creators by tags. Search creators by name. Browse creator profiles and their content. |
+| **My Posts** | Manage your published articles. Create, edit, and delete content. |
+| **Creator** | Creator profile page with member management and content oversight. |
+| **Earnings** | Full earnings dashboard — subscription revenue, API/chunk retrieval revenue, donation revenue. Configure content fee rates and subscription fee settings. |
+| **Plans** | View your subscription status across creators. Upgrade or downgrade membership tiers. |
+| **Wallet** | USDC balance management. Deposit and withdraw funds. Transaction history. |
+| **Referral** | Referral program information and commission tracking. |
+
+## Revenue Model
+
+| Stream | Description |
+|--------|-------------|
+| **Memberships** | Recurring USDC subscriptions (tiered access: Basic, Premium, Ultra) |
+| **Donations** | One-time USDC payments with optional messages |
+| **API / Chunk Retrieval** | Token-based micro-payments for AI agents accessing content chunks |
+| **Referrals** | Commission-based rewards for referring new creators |
+
 ## Technology Stack
 
 | Layer          | Technology                                |
@@ -176,6 +200,7 @@ Grant Access → Decryption Key Provided → Content Accessible
 | **Auth**       | zkLogin (Google OAuth)                    |
 | **Storage**    | Walrus Protocol                           |
 | **Encryption** | SEAL Protocol                             |
+| **Search**     | pgvector (HNSW) + pg_bigm + Cross-encoder |
 | **Frontend**   | React 19, Next.js 16, Tailwind CSS v4     |
 | **State**      | TanStack Query, Zustand                   |
 
