@@ -1,0 +1,159 @@
+export const metadata = {
+  title: 'MCP Server',
+  description:
+    'Learn about the zing MCP server for AI agent integration with search, chunk retrieval, and expand tools.',
+}
+
+# MCP Server
+
+`zing mcp serve` starts an MCP server over stdio that AI agents (Claude Desktop, Cursor, Codex, etc.) can connect to as a subprocess. The server provides three tools. {{ className: 'lead' }}
+
+## Prerequisites
+
+Install the `zing` CLI first — see the [CLI page](/mcp) for installation, configuration, and wallet setup.
+
+---
+
+## Client Setup
+
+**Claude Desktop** — add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "zing": {
+      "command": "zing",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+**Cursor** — add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "zing": {
+      "command": "zing",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+**With API override:**
+
+```json
+{
+  "command": "zing",
+  "args": ["mcp", "serve", "--api", "https://staging.api.com"]
+}
+```
+
+---
+
+## Tool: `zing_search`
+
+**Description:**
+
+> Search the Zing decentralized knowledge base. Provide short keyword queries (2-4 words preferred). Returns articles with relevance scores, excerpts, tags, and budget info. Default limit is 20.
+
+**Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `q` | string | yes | — | Search query (compact keywords preferred) |
+| `owner` | string | no | `null` | Filter to specific creator's wiki address |
+| `limit` | int | no | `20` | Max results (capped at 50) |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `results[].article_id` | string | On-chain article address |
+| `results[].title` | string | Article title |
+| `results[].excerpt` | string or null | Best-matching text snippet |
+| `results[].heading_path` | string[] | Heading hierarchy for the match |
+| `results[].score` | float | Relevance score (cross-encoder reranked) |
+| `results[].article_token_count` | int | Total tokens in the article |
+| `results[].recency_days` | int | Days since last index |
+| `results[].tags` | string[] | Extracted topic tags |
+| `budget.paid_usdc` | string | Total USDC sent (in micro-USDC) |
+| `budget.consumed_usdc` | string | USDC consumed by this request |
+| `budget.remaining_usdc` | string | USDC remaining after this request |
+
+---
+
+## Tool: `zing_chunks`
+
+**Description:**
+
+> Retrieve raw text segments from search results with per-chunk pricing. Provide short keyword queries. Returns chunks with text, scores, content_type, and truncation metadata. Set expand=true (no extra cost) to return full text instead of excerpts. Use article_ids to filter to specific articles. When truncation metadata is present, call zing_expand_chunks with those chunk_ids to retrieve full text. Default limit is 20.
+
+**Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `q` | string | yes | — | Search query (compact 2-4 word keywords) |
+| `owner` | string | no | `null` | Filter to specific creator's wiki address |
+| `limit` | int | no | `20` | Max results (capped at 50) |
+| `expand` | bool | no | `false` | Return full untruncated text instead of excerpts (no extra cost) |
+| `article_ids` | string[] | no | `null` | Filter to specific article IDs |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chunks[].chunk_id` | int | Unique chunk identifier |
+| `chunks[].article_id` | string | On-chain article address |
+| `chunks[].title` | string | Article title |
+| `chunks[].text` | string | Chunk text (excerpt or full if `expand=true`) |
+| `chunks[].score` | float | Blended relevance score |
+| `chunks[].chunk_token_count` | int | Estimated tokens in this chunk |
+| `chunks[].heading_path` | string[] | Heading hierarchy |
+| `chunks[].content_type` | string | `"prose"`, `"code"`, or `"table"` |
+| `chunks[].language` | string or null | Programming language for code chunks |
+| `chunks[].truncated` | object or null | Truncation metadata (see below) |
+| `budget.*` | string | Same structure as `zing_search` |
+
+**Truncation workflow:**
+
+```
+zing_chunks → chunk.truncated is non-null → zing_expand_chunks(chunk_ids) → full text
+```
+
+---
+
+## Tool: `zing_expand_chunks`
+
+**Description:**
+
+> Expand truncated chunks to retrieve full untruncated text. Pass chunk_ids from chunks results that have non-null truncated fields. Max 20 chunk IDs per call.
+
+**Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `chunk_ids` | int[] | yes | — | Chunk IDs to expand (max 20) |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chunks[].chunk_id` | int | Chunk identifier |
+| `chunks[].article_id` | string | On-chain article address |
+| `chunks[].heading_path` | string[] | Heading hierarchy |
+| `chunks[].chunk_text` | string | Full untruncated chunk content |
+| `chunks[].content_type` | string | `"prose"`, `"code"`, or `"table"` |
+| `chunks[].token_count` | int | Estimated tokens |
+| `chunks[].truncated` | object or null | Truncation metadata (always non-null for expand) |
+| `budget.*` | string | Same structure as `zing_search` |
+
+---
+
+## Next Steps
+
+- [CLI](/mcp) - Install and use the zing CLI
+- [Search API](/knowledge-graph) - Explore the search and chunk API endpoints
+- [Pay-Per-Query API](/pay-per-query) - Learn about per-chunk token-based pricing

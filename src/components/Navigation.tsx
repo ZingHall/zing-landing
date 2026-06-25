@@ -252,7 +252,8 @@ export const navigation: Array<NavGroup> = [
   {
     title: 'Search & Retrieval',
     links: [
-      { title: 'MCP & CLI', href: '/mcp' },
+      { title: 'CLI', href: '/mcp' },
+      { title: 'MCP Server', href: '/mcp-server' },
       { title: 'Search API', href: '/knowledge-graph' },
       { title: 'Pay-Per-Query API', href: '/pay-per-query' },
       { title: 'Attribution Ledger', href: '/attribution-ledger' },
