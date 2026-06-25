@@ -6,16 +6,19 @@ export const metadata = {
 
 # MCP & CLI
 
-The `zing` CLI is a command-line tool for paid semantic search and chunk retrieval on the Zing platform. It executes USDC micro-payments on Sui, queries the Search API, and includes an MCP server for AI agent integration. {{ className: 'lead' }}
+CLI tool + MCP server for paid semantic search and chunk retrieval on the Zing platform. Executes USDC micro-payments on Sui and queries the Search API. {{ className: 'lead' }}
+
+Two usage personas:
+
+- **CLI user** — run `zing search`, `zing chunks`, `zing expand` directly in a terminal
+- **MCP agent** — AI agents use `zing mcp serve` to get `zing_search`, `zing_chunks`, `zing_expand_chunks` tools over stdio
+
+---
 
 ## Prerequisites
 
 1. **Rust toolchain** — edition 2021
-2. **Sui CLI** — [install](https://docs.sui.io/) and configure:
-   ```bash
-   sui client  # creates ~/.sui/sui_config/client.yaml
-   ```
-3. **Sui wallet** with USDC balance (≥0.01 USDC) on mainnet
+2. **USDC on Sui** — at least 0.01 USDC on Sui mainnet
 
 ---
 
@@ -48,25 +51,35 @@ If you see a version string, installation succeeded. The binary `zing` is placed
 
 ## Configuration
 
-### How the CLI finds your Sui wallet
+Zing manages its own config and keypair, fully independent from Sui CLI.
 
-The CLI reads from your Sui configuration directory:
+### First run
+
+On first run, `zing` auto-creates its config directory:
 
 ```
-~/.sui/sui_config/
-  client.yaml     — active address (created by `sui client`)
-  sui.keystore    — Ed25519 keypair (created by `sui client`)
+~/.zing/
+  zing_config/
+    client.yaml       — active address, active env, RPC endpoints
+    zing.keystore     — Ed25519 private key (Sui keystore format)
 ```
 
-Override the directory with the `SUI_CONFIG_DIR` environment variable.
+A new Ed25519 keypair is generated and the address is printed. Fund this address with at least 0.01 USDC on Sui mainnet to use paid search.
+
+### Override config directory
+
+Set `ZING_CONFIG_DIR` to use a custom path:
+
+```bash
+export ZING_CONFIG_DIR=/custom/path/zing_config
+```
 
 ### Defaults and overrides
 
 | Variable | Overrides | Default |
 |----------|-----------|---------|
+| `ZING_CONFIG_DIR` | Config directory path | `~/.zing/zing_config` |
 | `ZING_API_URL` | API base URL | `https://search.zing.services` |
-| `ZING_PLATFORM_USDC_ADDRESS` | Payment recipient | hardcoded platform address |
-| `SUI_CONFIG_DIR` | Sui config path | `~/.sui/sui_config` |
 | `--api` flag | API base URL | overrides env/fallback |
 | `--rpc` flag | Sui fullnode URL | `https://fullnode.mainnet.sui.io:443` |
 
@@ -74,7 +87,7 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
 ---
 
-## Subcommands
+## CLI Commands
 
 ### `zing version` {{ tag: 'CLI', label: 'version' }}
 
@@ -91,7 +104,6 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
     ```bash {{ title: 'bash' }}
     zing version
-    # → zing 0.1.0
     ```
 
     </CodeGroup>
@@ -102,12 +114,12 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
 ---
 
-### `zing search <query>` {{ tag: 'CLI', label: 'search' }}
+### `zing search` — Paid semantic search {{ tag: 'CLI', label: 'search' }}
 
 <Row>
   <Col>
 
-    Paid semantic search across all indexed wikis. Executes a USDC micro-payment on Sui, signs an `ApiAccessMessage`, and queries the Search API. Results are returned up to the paid budget.
+    Search across all indexed wikis.
 
     ### Flags
 
@@ -158,12 +170,12 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
 ---
 
-### `zing chunks <query>` {{ tag: 'CLI', label: 'chunks' }}
+### `zing chunks` — Paid chunk retrieval {{ tag: 'CLI', label: 'chunks' }}
 
 <Row>
   <Col>
 
-    Paid chunk retrieval with full content text. Same payment flow as search but returns chunk-level data with scores, content types, and truncation metadata.
+    Retrieve semantic chunks with per-chunk pricing. Returns precise raw text segments with metadata.
 
     ### Flags
 
@@ -173,6 +185,9 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
       </Property>
       <Property name="--limit" type="integer">
         Max results (default: 20, max: 50).
+      </Property>
+      <Property name="--expand" type="boolean">
+        Return full untruncated chunk text instead of excerpts (no extra cost).
       </Property>
       <Property name="--api" type="string">
         Override API base URL.
@@ -194,8 +209,12 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
     zing chunks "zero-knowledge proofs"
     ```
 
+    ```bash {{ title: 'Full untruncated text' }}
+    zing chunks "consensus" --expand
+    ```
+
     ```bash {{ title: 'Scoped with limit' }}
-    zing chunks "consensus" --owner 0xabc... --limit 20
+    zing chunks "Move language" --owner 0xabc... --limit 30
     ```
 
     ```bash {{ title: 'JSON output' }}
@@ -209,7 +228,48 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
 ---
 
-### `zing client` {{ tag: 'CLI', label: 'client' }}
+### `zing expand` — Expand truncated chunks {{ tag: 'CLI', label: 'expand' }}
+
+<Row>
+  <Col>
+
+    Retrieve the full untruncated text for up to 20 chunks by their IDs. Use this when a chunk result shows truncation metadata.
+
+    ### Flags
+
+    <Properties>
+      <Property name="--api" type="string">
+        Override API base URL.
+      </Property>
+      <Property name="--rpc" type="string">
+        Override Sui fullnode URL.
+      </Property>
+      <Property name="--json" type="boolean">
+        Output JSON for agent consumption.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Usage" tag="" label="">
+
+    ```bash {{ title: 'Expand by IDs' }}
+    zing expand 94 1603 1802
+    ```
+
+    ```bash {{ title: 'JSON output' }}
+    zing expand 94 1603 --json
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+### `zing client` — Wallet utilities {{ tag: 'CLI', label: 'client' }}
 
 <Row>
   <Col>
@@ -220,7 +280,7 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
     <Properties>
       <Property name="active-address" type="subcommand">
-        Show the active Sui address.
+        Show the active zing address.
       </Property>
       <Property name="balance" type="subcommand">
         Show SUI and USDC balances.
@@ -234,13 +294,10 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
     ```bash {{ title: 'Active address' }}
     zing client active-address
-    # → 0x1aa2c40369fa0fffb12fe6e1415b8aba52d15cc3cf59e001adc5d2687920fbd6
     ```
 
     ```bash {{ title: 'Balances' }}
     zing client balance
-    # → SUI: 1.5 SUI
-    # → USDC: 50.00 USDC
     ```
 
     </CodeGroup>
@@ -250,23 +307,20 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
 ---
 
-### `zing mcp serve` {{ tag: 'CLI', label: 'mcp serve' }}
+### `zing mcp serve` — Start MCP server {{ tag: 'CLI', label: 'mcp serve' }}
 
 <Row>
   <Col>
 
-    Start an MCP server on stdio for AI agent integration. Provides two MCP tools:
+    Start an MCP server on stdio for AI agent integration. Exposes `zing_search`, `zing_chunks`, and `zing_expand_chunks` as MCP tools. See [MCP Server](#mcp-server) for full documentation.
+
+    ### Flags
 
     <Properties>
-      <Property name="zing_search" type="tool">
-        Triage/search — finds relevant articles by query, returns titles, excerpts, scores, and metadata. Use for discovery and survey queries.
-      </Property>
-      <Property name="zing_chunks" type="tool">
-        Deep content retrieval — returns full chunk text with scores, content types, and truncation info. Use when you need the actual content to answer a question.
+      <Property name="--api" type="string">
+        Override API base URL.
       </Property>
     </Properties>
-
-    Connect any MCP-compatible client (Claude Desktop, Cursor, VS Code) by running `zing mcp serve` as a subprocess.
 
   </Col>
   <Col sticky>
@@ -275,18 +329,10 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
     ```bash {{ title: 'Start MCP server' }}
     zing mcp serve
-    # MCP server listening on stdio...
     ```
 
-    ```json {{ title: 'Claude Desktop config' }}
-    {
-      "mcpServers": {
-        "zing": {
-          "command": "zing",
-          "args": ["mcp", "serve"]
-        }
-      }
-    }
+    ```bash {{ title: 'With API override' }}
+    zing mcp serve --api https://staging.api.com
     ```
 
     </CodeGroup>
@@ -296,56 +342,253 @@ The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.t
 
 ---
 
-## JSON Output (Agent Consumption)
+## JSON Output Schemas
 
-The `--json` flag returns structured JSON instead of human-readable output. This is designed for machine consumption in AI agent workflows.
+The `--json` flag on `search`, `chunks`, and `expand` commands returns structured JSON instead of human-readable output. All monetary values are in micro-USDC (1 USDC = 1,000,000 micro-USDC).
 
-### Search response
-
-```bash
-zing search "Sui gas mechanism" --json
-```
+### Search (`--json`)
 
 ```json
 {
   "results": [
     {
-      "article_id": "0xabc...",
+      "article_id": "0xf6bd...",
       "title": "Gas Fees",
       "excerpt": "When you submit transactions...",
+      "heading_path": ["Introduction", "Gas Fees"],
       "score": 0.81,
-      "token_count": 4200,
+      "article_token_count": 4200,
       "recency_days": 0,
-      "tags": ["finance", "cryptocurrency"]
+      "tags": ["cryptocurrency", "defi"]
     }
   ],
   "budget": {
-    "paid_usdc": 10000,
-    "consumed_usdc": 1250,
-    "remaining_usdc": 8750
+    "paid_usdc": "10000",
+    "consumed_usdc": "1250",
+    "remaining_usdc": "8750"
+  }
+}
+```
+
+### Chunks (`--json`)
+
+```json
+{
+  "chunks": [
+    {
+      "chunk_id": 94,
+      "article_id": "0xf6bd...",
+      "title": "What is Web3",
+      "text": "Web3 is the next generation of the internet...",
+      "score": 2.14,
+      "chunk_token_count": 116,
+      "heading_path": ["Introduction"],
+      "content_type": "prose",
+      "language": null,
+      "truncated": {
+        "content_type": "prose",
+        "prose_chars_total": 850,
+        "prose_chars_shown": 280
+      }
+    }
+  ],
+  "budget": {
+    "paid_usdc": "10000",
+    "consumed_usdc": "797",
+    "remaining_usdc": "9203"
+  }
+}
+```
+
+**Truncation:** When `truncated` is non-null, the `text` field is an excerpt. The `truncated` object tells you what was omitted:
+
+| Field | When | Meaning |
+|-------|------|---------|
+| `content_type` | always | `"prose"`, `"code"`, or `"table"` |
+| `table_rows_total / table_rows_shown` | table chunks | Hidden data rows |
+| `code_lines_total / code_lines_shown` | code chunks | Truncated lines |
+| `prose_chars_total / prose_chars_shown` | prose chunks | Truncated characters |
+
+Use `zing expand <chunk_id>` or the `zing_expand_chunks` MCP tool to retrieve the full text.
+
+### Expand (`--json`)
+
+```json
+{
+  "chunks": [
+    {
+      "chunk_id": 94,
+      "article_id": "0xf6bd...",
+      "heading_path": ["Introduction", "What is Web3"],
+      "chunk_text": "Web3 is the next generation of the internet...\n\n(full untruncated text)",
+      "content_type": "prose",
+      "token_count": 116,
+      "truncated": {
+        "content_type": "table",
+        "table_rows_total": 15,
+        "table_rows_shown": 3
+      }
+    }
+  ],
+  "budget": {
+    "paid_usdc": "10000",
+    "consumed_usdc": "2320",
+    "remaining_usdc": "7680"
   }
 }
 ```
 
 ---
 
+## MCP Server
+
+`zing mcp serve` starts an MCP server over stdio that AI agents (Claude Desktop, Cursor, Codex, etc.) can connect to as a subprocess. The server provides three tools.
+
+### Client Setup
+
+**Claude Desktop** — add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "zing": {
+      "command": "zing",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+**Cursor** — add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "zing": {
+      "command": "zing",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+With API override:
+
+```json
+{
+  "command": "zing",
+  "args": ["mcp", "serve", "--api", "https://staging.api.com"]
+}
+```
+
+---
+
+### Tool: `zing_search`
+
+**Description:**
+
+> Search the Zing decentralized knowledge base. Provide short keyword queries (2-4 words preferred). Returns articles with relevance scores, excerpts, tags, and budget info. Default limit is 20.
+
+**Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `q` | string | yes | — | Search query (compact keywords preferred) |
+| `owner` | string | no | `null` | Filter to specific creator's wiki address |
+| `limit` | int | no | `20` | Max results (capped at 50) |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `results[].article_id` | string | On-chain article address |
+| `results[].title` | string | Article title |
+| `results[].excerpt` | string or null | Best-matching text snippet |
+| `results[].heading_path` | string[] | Heading hierarchy for the match |
+| `results[].score` | float | Relevance score (cross-encoder reranked) |
+| `results[].article_token_count` | int | Total tokens in the article |
+| `results[].recency_days` | int | Days since last index |
+| `results[].tags` | string[] | Extracted topic tags |
+| `budget.paid_usdc` | string | Total USDC sent (in micro-USDC) |
+| `budget.consumed_usdc` | string | USDC consumed by this request |
+| `budget.remaining_usdc` | string | USDC remaining after this request |
+
+---
+
+### Tool: `zing_chunks`
+
+**Description:**
+
+> Retrieve raw text segments from search results with per-chunk pricing. Provide short keyword queries. Returns chunks with text, scores, content_type, and truncation metadata. Set expand=true (no extra cost) to return full text instead of excerpts. Use article_ids to filter to specific articles. When truncation metadata is present, call zing_expand_chunks with those chunk_ids to retrieve full text. Default limit is 20.
+
+**Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `q` | string | yes | — | Search query (compact 2-4 word keywords) |
+| `owner` | string | no | `null` | Filter to specific creator's wiki address |
+| `limit` | int | no | `20` | Max results (capped at 50) |
+| `expand` | bool | no | `false` | Return full untruncated text instead of excerpts (no extra cost) |
+| `article_ids` | string[] | no | `null` | Filter to specific article IDs |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chunks[].chunk_id` | int | Unique chunk identifier |
+| `chunks[].article_id` | string | On-chain article address |
+| `chunks[].title` | string | Article title |
+| `chunks[].text` | string | Chunk text (excerpt or full if `expand=true`) |
+| `chunks[].score` | float | Blended relevance score |
+| `chunks[].chunk_token_count` | int | Estimated tokens in this chunk |
+| `chunks[].heading_path` | string[] | Heading hierarchy |
+| `chunks[].content_type` | string | `"prose"`, `"code"`, or `"table"` |
+| `chunks[].language` | string or null | Programming language for code chunks |
+| `chunks[].truncated` | object or null | Truncation metadata (see below) |
+| `budget.*` | string | Same structure as `zing_search` |
+
+**Truncation workflow:**
+
+```
+zing_chunks → chunk.truncated is non-null → zing_expand_chunks(chunk_ids) → full text
+```
+
+---
+
+### Tool: `zing_expand_chunks`
+
+**Description:**
+
+> Expand truncated chunks to retrieve full untruncated text. Pass chunk_ids from chunks results that have non-null truncated fields. Max 20 chunk IDs per call.
+
+**Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `chunk_ids` | int[] | yes | — | Chunk IDs to expand (max 20) |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chunks[].chunk_id` | int | Chunk identifier |
+| `chunks[].article_id` | string | On-chain article address |
+| `chunks[].heading_path` | string[] | Heading hierarchy |
+| `chunks[].chunk_text` | string | Full untruncated chunk content |
+| `chunks[].content_type` | string | `"prose"`, `"code"`, or `"table"` |
+| `chunks[].token_count` | int | Estimated tokens |
+| `chunks[].truncated` | object or null | Truncation metadata (always non-null for expand) |
+| `budget.*` | string | Same structure as `zing_search` |
+
+---
+
 ## Payment Flow
 
-Each request costs the flat search fee (default 0.0005 USDC for ≤20 results, scales linearly for larger limits) plus per-result token fees:
+Each request costs a flat search/infrastructure fee (default 0.0005 USDC for ≤20 results, scales linearly for larger limits) plus per-result/per-chunk token fees:
 
-```
-1. Send USDC — CLI sends USDC to the platform address via
-   0x2::balance::send_funds<USDC>
-   Auto-consolidates coins if balance is fragmented.
-
-2. Sign message — BCS-encodes ApiAccessMessage {q, wiki,
-   transaction_digest, timestamp} and signs as a PersonalMessage
-   with the Ed25519 keypair from sui.keystore.
-
-3. Submit — sends signed request to the Search API. Server
-   verifies on-chain payment, runs search pipeline, returns
-   results up to the paid budget.
-```
+1. **Send USDC** — the CLI sends USDC via `0x2::balance::send_funds<USDC>` to the platform address. USDC coins are always consolidated into address balance before payment to avoid stale RPC cache issues.
+2. **Sign message** — BCS-encodes `ApiAccessMessage {q, wiki, transaction_digest, timestamp, expand?, article_ids?}` and signs as a `PersonalMessage` with the Ed25519 keypair from `zing.keystore`.
+3. **Submit** — sends the signed request to the Search API. The server verifies the on-chain payment, runs the search/chunk pipeline, and returns results up to the paid budget.
 
 The budget breakdown is displayed in the output:
 
@@ -354,32 +597,6 @@ Budget: paid=10000, consumed=1250, remaining=8750
 ```
 
 ---
-
-## Project Structure
-
-```
-zing-cli/
-  Cargo.toml        — workspace root
-  src/
-    main.rs         — CLI entry: clap subcommands, output formatting
-    lib.rs          — module declarations
-    config.rs       — reads Sui client.yaml + env vars
-    error.rs        — typed error codes
-    keystore.rs     — loads Ed25519 keypair from sui.keystore
-    sui.rs          — USDC balance check + payment PTB builder
-    api.rs          — ApiAccessMessage signing + HTTP calls
-    models.rs       — request/response types (serde)
-    mcp.rs          — MCP server (zing_search, zing_chunks tools)
-  eval/             — zing-eval RAG evaluation framework
-    src/
-      main.rs       — eval CLI (run, list, formula)
-      checks.rs     — L1 retrieval / L2 score sanity
-      golden.rs     — YAML query loader
-      runner.rs     — API client for chunk/search estimate
-      l3_eval.rs    — LLM judge (opt-in)
-      report.rs     — JSON report writer
-    queries/        — golden query YAML definitions
-```
 
 ## Next Steps
 
