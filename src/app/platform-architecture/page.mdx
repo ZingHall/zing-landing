@@ -14,7 +14,7 @@ The Zing Protocol platform consists of several integrated layers:
 
 - **Sui Blockchain** - Core transaction and ownership layer
 - **Walrus Protocol** - Decentralized storage for content blobs
-- **SEAL Protocol** - Encryption for tiered content access
+- **Seal Protocol** - Encryption for tiered content access
 - **Search & Retrieval** - Hybrid vector + lexical search with cross-encoder reranking for AI agent queries
 - **zkLogin** - Web2-style authentication without seed phrases
 
@@ -38,7 +38,7 @@ The Zing Protocol platform consists of several integrated layers:
         ┌───────────────────┼───────────────────┐
         ▼                   ▼                   ▼
 ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│ Walrus Storage│  │SEAL Encryption│  │ Search Engine │
+│ Walrus Storage│  │Seal Encryption│  │ Search Engine │
 │  (Content)    │  │ (Access Ctrl) │  │  (RAG)        │
 └───────────────┘  └───────────────┘  └───────────────┘
 ```
@@ -76,9 +76,9 @@ const { encodedSize, writeCost } = storageCost(
 // Premium+: ~100 GB ($XX/month)
 ```
 
-### SEAL Protocol Encryption
+### Seal Protocol Encryption
 
-Content access is controlled via SEAL Protocol encryption. Members receive decryption keys based on their membership tier.
+Content access is controlled via Seal Protocol encryption. Members receive decryption keys based on their membership tier.
 
 ```typescript
 // Access tiers
@@ -141,7 +141,7 @@ POST /wallet/payout     # Withdraw funds
 ```
 Creator → Write Content (TipTap Editor) → Configure Access Tier
     ↓
-Calculate Storage Cost (Walrus) → Encrypt with SEAL
+Calculate Storage Cost (Walrus) → Encrypt with Seal
     ↓
 Publish Transaction (Sui) → Upload to Walrus → Get Blob ID
     ↓
@@ -199,7 +199,7 @@ The Zing web app provides creators and readers with the following pages:
 | **SDK**        | @mysten/sui, @mysten/walrus, @mysten/seal |
 | **Auth**       | zkLogin (Google OAuth)                    |
 | **Storage**    | Walrus Protocol                           |
-| **Encryption** | SEAL Protocol                             |
+| **Encryption** | Seal Protocol                             |
 | **Search**     | pgvector (HNSW) + pg_bigm + Cross-encoder |
 | **Frontend**   | React 19, Next.js 16, Tailwind CSS v4     |
 | **State**      | TanStack Query, Zustand                   |

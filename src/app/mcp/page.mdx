@@ -74,7 +74,28 @@ A new Ed25519 keypair is generated and the address is printed. Fund this address
 | `--api` flag | API base URL | overrides env/fallback |
 | `--rpc` flag | Sui fullnode URL | `https://fullnode.mainnet.sui.io:443` |
 
-The RPC URL defaults to **mainnet**. For testnet, pass `--rpc https://fullnode.testnet.sui.io:443`.
+---
+
+## Topup Your Wallet
+
+Before running paid commands, make sure your zing wallet has sufficient USDC:
+
+### Check your address
+
+```bash
+zing client active-address
+# Active address: 0x013c105e3597ec07e10dad679a276514e1e441ac522ebef32b8109986310dd8e
+```
+
+### Check your balance
+
+```bash
+zing client balance
+# Active address: 0x013c105e3597ec07e10dad679a276514e1e441ac522ebef32b8109986310dd8e
+# USDC balance: 0.098263 USDC
+```
+
+Fund this address with at least **0.01 USDC** on Sui mainnet. Note that 0.01 USDC is the minimum required balance for Sui's gas-free payment mechanism — actual per-request charges are far lower (typically under $0.001).
 
 ---
 

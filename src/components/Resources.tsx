@@ -31,7 +31,7 @@ const resources: Array<Resource> = [
     href: '/content',
     name: 'Content API',
     description:
-      'Create, manage, and monetize articles with Walrus storage and SEAL encryption.',
+      'Create, manage, and monetize articles with Walrus storage and Seal encryption.',
     icon: BoltIcon,
     pattern: {
       y: 16,
